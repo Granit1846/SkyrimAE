@@ -1,0 +1,13 @@
+﻿{
+    "$schema":  "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg-configuration.schema.json",
+    "registries":  [
+                       {
+                           "kind":  "git",
+                           "repository":  "https://github.com/ArcEarth/vcpkg-skyrim",
+                           "baseline":  "1bfd2c66d788e94c9e8325664c92aa5207fad203",
+                           "packages":  [
+                                            "commonlibsse-ng"
+                                        ]
+                       }
+                   ]
+}

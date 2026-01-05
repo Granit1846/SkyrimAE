@@ -1,0 +1,21 @@
+# Build
+build/
+out/
+.vs/
+
+# vcpkg
+vcpkg_installed/
+
+# Binaries
+*.dll
+*.pdb
+
+# Papyrus compiled
+*.pex
+
+# Logs
+*.log
+
+# OS
+Thumbs.db
+.DS_Store
