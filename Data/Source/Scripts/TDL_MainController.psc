@@ -94,6 +94,14 @@ Bool Function RunStage(Int aiStage)
 		EndIf
 		Return inv.RunStage(aiStage, playerRef)
 
+	; ===== TELEPORT (90–99) =====
+	ElseIf aiStage >= 90 && aiStage <= 99
+		TDL_Teleport tp = q as TDL_Teleport
+		If !tp
+ 			Return _Fail(aiStage, 90, "No TDL_Teleport on quest")
+ 		EndIf
+ 		Return tp.RunStage(aiStage, playerRef)
+
 	; ===== VIRUS (100–103) =====
 	ElseIf aiStage >= 100 && aiStage <= 103
 		TDL_Virus virus = q as TDL_Virus

@@ -3,6 +3,8 @@ ScriptName TDL_StreamController extends Quest
 Quest Property MainControllerQuest Auto
 GlobalVariable Property TDL_DebugEnabled Auto
 
+Bool _ExternalScheduler = True
+
 ; ================= SOURCE PRIORITY =================
 Int SOURCE_BEATS  = 1
 Int SOURCE_POINTS = 2
@@ -19,6 +21,7 @@ Int GROUP_TELEPORT  = 6
 Int GROUP_VIRUS     = 7
 Int GROUP_WEATHER   = 8
 Int GROUP_GIGANT    = 9
+Int GROUP_WRATH     = 10
 
 ; ================= ACTION TABLE =================
 String[] ActionIDs
@@ -40,29 +43,60 @@ Bool  _busy = false
 ; ================= INIT =================
 Event OnInit()
 	_BuildActionTable()
+	RegisterForModEvent("TDL_SubmitAction", "OnTDLSubmitAction")
+EndEvent
+
+Event OnTDLSubmitAction(String eventName, String strArg, Float numArg, Form sender)
+	SubmitAction(strArg, numArg as Int)
 EndEvent
 
 ; ================= PUBLIC API =================
 Bool Function SubmitAction(String actionID, Int sourceType)
+	sourceType = _ClampSource(sourceType)
+
+	If _ExternalScheduler
+		Int idx = _FindActionIndex(actionID)
+		If idx < 0
+			Return False
+		EndIf
+		If !ActionEnabled[idx]
+			Return False
+		EndIf
+		If MainControllerQuest == None
+			Return False
+		EndIf
+
+		MainControllerQuest.SetStage(ActionStages[idx])
+		Return True
+	EndIf
+
+	sourceType = _ClampSource(sourceType)
+
 	Int idx = _FindActionIndex(actionID)
 	If idx < 0
+		_Notify("REJECT unknown action=" + actionID)
 		Return False
 	EndIf
+
 	If !ActionEnabled[idx]
+		_Notify("REJECT disabled action=" + actionID)
 		Return False
 	EndIf
 
 	If _currentIdx < 0
+		_Notify("ACCEPT start action=" + actionID + " src=" + sourceType)
 		_StartAction(idx, sourceType)
 		Return True
 	EndIf
 
 	If sourceType < _currentSrc
+		_Notify("ACCEPT pending action=" + actionID + " src=" + sourceType)
 		_pendingIdx = idx
 		_pendingSrc = sourceType
 		Return True
 	EndIf
 
+	_Notify("REJECT priority action=" + actionID + " src=" + sourceType + " currentSrc=" + _currentSrc)
 	Return False
 EndFunction
 
@@ -96,6 +130,7 @@ EndEvent
 ; ================= EXECUTION =================
 Function _StartAction(Int idx, Int sourceType)
 	If MainControllerQuest == None
+		_Notify("ERROR MainControllerQuest None")
 		Return
 	EndIf
 
@@ -113,18 +148,41 @@ Function _ClearCurrent()
 	_cooldownEnd = 0.0
 EndFunction
 
+Int Function _ClampSource(Int s)
+	If s < SOURCE_BEATS
+		Return SOURCE_BEATS
+	EndIf
+	If s > SOURCE_VOTE
+		Return SOURCE_VOTE
+	EndIf
+	Return s
+EndFunction
+
+Function _Notify(String asText)
+	If !TDL_DebugEnabled || (TDL_DebugEnabled.GetValueInt() == 1)
+		Debug.Trace("TDL StreamController: " + asText)
+	EndIf
+EndFunction
+
 ; ================= ACTION TABLE =================
 Function _BuildActionTable()
-
-	ActionIDs       = new String[42]
-	ActionStages    = new Int[42]
-	ActionGroups    = new Int[42]
-	ActionCooldowns = new Float[42]
-	ActionEnabled   = new Bool[42]
+	; ¬—≈√ќ ACTIONS: 46 (если добавишь/уберЄшь Ч помен€й размер массивов)
+	ActionIDs       = new String[46]
+	ActionStages    = new Int[46]
+	ActionGroups    = new Int[46]
+	ActionCooldowns = new Float[46]
+	ActionEnabled   = new Bool[46]
 
 	Int i = 0
 
 	; ===== SYSTEM =====
+	ActionIDs[i] = "SYSTEM_PING"
+	ActionStages[i] = 10
+	ActionGroups[i] = GROUP_NONE
+	ActionCooldowns[i] = 1.0
+	ActionEnabled[i] = true
+	i += 1
+
 	ActionIDs[i] = "SYSTEM_HEALING"
 	ActionStages[i] = 20
 	ActionGroups[i] = GROUP_NONE
@@ -139,7 +197,29 @@ Function _BuildActionTable()
 	ActionEnabled[i] = true
 	i += 1
 
-	; ===== SUMMON =====
+	; ===== WRATH (11Ц13) =====
+	ActionIDs[i] = "WRATH_11"
+	ActionStages[i] = 11
+	ActionGroups[i] = GROUP_WRATH
+	ActionCooldowns[i] = 60.0
+	ActionEnabled[i] = true
+	i += 1
+
+	ActionIDs[i] = "WRATH_12"
+	ActionStages[i] = 12
+	ActionGroups[i] = GROUP_WRATH
+	ActionCooldowns[i] = 60.0
+	ActionEnabled[i] = true
+	i += 1
+
+	ActionIDs[i] = "WRATH_13"
+	ActionStages[i] = 13
+	ActionGroups[i] = GROUP_WRATH
+	ActionCooldowns[i] = 60.0
+	ActionEnabled[i] = true
+	i += 1
+
+	; ===== SUMMON (40Ц46) =====
 	ActionIDs[i] = "SUMMON_ANY"
 	ActionStages[i] = 40
 	ActionGroups[i] = GROUP_SUMMON
@@ -189,7 +269,7 @@ Function _BuildActionTable()
 	ActionEnabled[i] = true
 	i += 1
 
-	; ===== HUNTER =====
+	; ===== HUNTER (47) =====
 	ActionIDs[i] = "HUNTER_START"
 	ActionStages[i] = 47
 	ActionGroups[i] = GROUP_HUNTER
@@ -197,7 +277,7 @@ Function _BuildActionTable()
 	ActionEnabled[i] = true
 	i += 1
 
-	; ===== COMEDY =====
+	; ===== COMEDY (50Ц53) =====
 	ActionIDs[i] = "COMEDY_FAKE_HERO"
 	ActionStages[i] = 50
 	ActionGroups[i] = GROUP_COMEDY
@@ -226,7 +306,7 @@ Function _BuildActionTable()
 	ActionEnabled[i] = true
 	i += 1
 
-	; ===== CHAOS =====
+	; ===== CHAOS (70Ц71) =====
 	ActionIDs[i] = "CHAOS_LOW_G"
 	ActionStages[i] = 70
 	ActionGroups[i] = GROUP_CHAOS
@@ -241,7 +321,7 @@ Function _BuildActionTable()
 	ActionEnabled[i] = true
 	i += 1
 
-	; ===== INVENTORY =====
+	; ===== INVENTORY (80Ц81) =====
 	ActionIDs[i] = "INVENTORY_SCATTER"
 	ActionStages[i] = 80
 	ActionGroups[i] = GROUP_INVENTORY
@@ -256,7 +336,7 @@ Function _BuildActionTable()
 	ActionEnabled[i] = true
 	i += 1
 
-	; ===== TELEPORT =====
+	; ===== TELEPORT (90Ц99) =====
 	ActionIDs[i] = "TELEPORT_RANDOM_CITY"
 	ActionStages[i] = 90
 	ActionGroups[i] = GROUP_TELEPORT
@@ -327,7 +407,7 @@ Function _BuildActionTable()
 	ActionEnabled[i] = true
 	i += 1
 
-	; ===== VIRUS =====
+	; ===== VIRUS (100Ц102) =====
 	ActionIDs[i] = "VIRUS_DISEASE"
 	ActionStages[i] = 100
 	ActionGroups[i] = GROUP_VIRUS
@@ -349,7 +429,7 @@ Function _BuildActionTable()
 	ActionEnabled[i] = true
 	i += 1
 
-	; ===== WEATHER =====
+	; ===== WEATHER (110Ц114, 119) =====
 	ActionIDs[i] = "WEATHER_CLEAR"
 	ActionStages[i] = 110
 	ActionGroups[i] = GROUP_WEATHER
@@ -392,7 +472,7 @@ Function _BuildActionTable()
 	ActionEnabled[i] = true
 	i += 1
 
-	; ===== GIGANT =====
+	; ===== GIGANT (120Ц124) =====
 	ActionIDs[i] = "GIGANT_BIG"
 	ActionStages[i] = 120
 	ActionGroups[i] = GROUP_GIGANT
@@ -426,6 +506,7 @@ Function _BuildActionTable()
 	ActionGroups[i] = GROUP_GIGANT
 	ActionCooldowns[i] = 30.0
 	ActionEnabled[i] = true
+	i += 1
 EndFunction
 
 ; ================= UTILS =================
@@ -438,13 +519,4 @@ Int Function _FindActionIndex(String id)
 		i += 1
 	EndWhile
 	Return -1
-EndFunction
-
-; =====================================================
-; DEBUG UTILS - ƒќЅј¬»“№ ¬  ќЌ≈÷ ‘ј…Ћј
-; =====================================================
-Function _DebugLog(String msg)
-    If TDL_DebugEnabled && TDL_DebugEnabled.GetValueInt() == 1
-        Debug.Trace("[TDL_StreamController] " + msg)
-    EndIf
 EndFunction
