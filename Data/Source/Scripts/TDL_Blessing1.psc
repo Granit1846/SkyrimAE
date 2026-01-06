@@ -7,35 +7,52 @@ FormList Property TDL_Sign Auto
 
 Spell Property TDL_GodBuff Auto
 
+; internal: what group was picked in _PickSpellFromEither()
+Bool _lastPickWasBless = true
 
-; =====================================================
-; ENTRY
-; =====================================================
 Bool Function Run(Actor PlayerRef)
 	If !PlayerRef
-		_LogError("PlayerRef None")
+		PlayerRef = Game.GetPlayer()
+	EndIf
+	If !PlayerRef
+		_Notify("TDL Bless PlayerRef None")
 		Return False
 	EndIf
 
-	Spell chosen = _PickSpellFromEither()
-	If !chosen
-		_LogError("Blessing lists empty or invalid")
-		Return False
-	EndIf
-
-	chosen.Cast(PlayerRef, PlayerRef)
-
+	; 1) always cast GodBuff (separate from bless/sign logic)
 	If TDL_GodBuff
 		TDL_GodBuff.Cast(PlayerRef, PlayerRef)
 	EndIf
 
-	Return True
+	; 2) pick from Bless or Sign
+	Spell chosen = _PickSpellFromEither()
+	If !chosen
+		_Notify("TDL Bless lists empty or non-spell")
+		Return False
+	EndIf
+
+	; 3) apply with vanilla-safe overwrite rules
+	If _lastPickWasBless
+		; Blessings: overwrite Blessings only (dispel), then cast chosen
+		_DispelListSpells(PlayerRef, TDL_Bles)
+		chosen.Cast(PlayerRef, PlayerRef)
+		_Notify("TDL Bless OK (Bless): " + chosen.GetName())
+		Return True
+	Else
+		; Signs: overwrite Signs only (remove), then add chosen ability
+		_RemoveListSpells(PlayerRef, TDL_Sign)
+
+		; force refresh even if same sign re-rolled
+		If PlayerRef.HasSpell(chosen)
+			PlayerRef.RemoveSpell(chosen)
+		EndIf
+		PlayerRef.AddSpell(chosen, false)
+
+		_Notify("TDL Bless OK (Sign): " + chosen.GetName())
+		Return True
+	EndIf
 EndFunction
 
-
-; =====================================================
-; PICK SPELL
-; =====================================================
 Spell Function _PickSpellFromEither()
 	Int bSize = 0
 	Int sSize = 0
@@ -51,12 +68,20 @@ Spell Function _PickSpellFromEither()
 		Return None
 	EndIf
 
-	Bool useBless = true
+	Bool useBless = True
 	If bSize > 0 && sSize > 0
-		useBless = (Utility.RandomInt(0, 1) == 0)
+		If Utility.RandomInt(0, 1) == 0
+			useBless = True
+		Else
+			useBless = False
+		EndIf
 	ElseIf bSize <= 0
-		useBless = false
+		useBless = False
+	Else
+		useBless = True
 	EndIf
+
+	_lastPickWasBless = useBless
 
 	FormList listRef = None
 	If useBless
@@ -71,17 +96,43 @@ Spell Function _PickSpellFromEither()
 
 	Int idx = Utility.RandomInt(0, listRef.GetSize() - 1)
 	Form f = listRef.GetAt(idx)
-
 	Return f as Spell
 EndFunction
 
+Function _DispelListSpells(Actor p, FormList lst)
+	If !p || !lst
+		Return
+	EndIf
 
-; =====================================================
-; LOGGING
-; =====================================================
-Function _LogError(String msg)
-	Debug.Trace("[TDL Blessing ERROR] " + msg)
-	If TDL_DebugEnabled && TDL_DebugEnabled.GetValueInt() == 1
-		Debug.Notification("[TDL Blessing] ERROR: " + msg)
+	Int i = 0
+	Int sz = lst.GetSize()
+	While i < sz
+		Spell sp = lst.GetAt(i) as Spell
+		If sp
+			p.DispelSpell(sp)
+		EndIf
+		i += 1
+	EndWhile
+EndFunction
+
+Function _RemoveListSpells(Actor p, FormList lst)
+	If !p || !lst
+		Return
+	EndIf
+
+	Int i = 0
+	Int sz = lst.GetSize()
+	While i < sz
+		Spell sp = lst.GetAt(i) as Spell
+		If sp && p.HasSpell(sp)
+			p.RemoveSpell(sp)
+		EndIf
+		i += 1
+	EndWhile
+EndFunction
+
+Function _Notify(String asText)
+	If !TDL_DebugEnabled || (TDL_DebugEnabled.GetValueInt() == 1)
+		Debug.Notification(asText)
 	EndIf
 EndFunction
