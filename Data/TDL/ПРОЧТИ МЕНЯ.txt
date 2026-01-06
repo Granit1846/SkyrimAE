@@ -1,0 +1,306 @@
+TDL — управление Twitch Dragonborn Legacy (TDL) через Named Pipe
+===============================================================
+
+Назначение
+----------
+Мод принимает команды извне (бот/стрим-софт/скрипты) и запускает эффекты в игре.
+
+Транспорт: Windows Named Pipe
+  \\.\pipe\TDL_Stream
+
+Рекомендуемый способ отправки команд — утилита tdl_send.exe (без консоли и без PowerShell).
+Она принимает аргументы БЕЗ символа "|" и внутри сама формирует строку для named pipe.
+
+
+Структура файлов (актуально)
+----------------------------
+ВАЖНО: SKSE-плагин всегда лежит здесь (нельзя переносить):
+  Data\SKSE\Plugins\TDL_StreamPlugin.dll
+
+Все производные файлы мода лежат в:
+  Data\TDL\
+
+Утилиты:
+  Data\TDL\Tools\tdl_send.exe      — отправка команд в pipe (без консоли)
+
+Конфиг:
+  Data\TDL\Config\TDL_Cooldowns.ini — кулдауны/дефолты групп/лимиты FORCE (глобально для мода)
+
+
+Требования
+----------
+1) Игра запущена и загружено сохранение (мир прогрузился).
+2) Установлен мод TDL и SKSE-плагин (TDL_StreamPlugin.dll).
+3) Windows 10/11 (Named Pipe).
+
+
+Быстрый старт (ручная проверка)
+-------------------------------
+1) Запусти игру и загрузи сохранение.
+2) Нажми Win+R и выполни:
+
+Пинг (рекомендуется первым):
+  "ПУТЬ_К_ИГРЕ\Data\TDL\Tools\tdl_send.exe" NORMAL SYSTEM_PING 2
+
+Пример для стандартной установки Steam (замените путь на свой):
+  "F:\SteamLibrary\steamapps\common\Skyrim Special Edition\Data\TDL\Tools\tdl_send.exe" NORMAL SYSTEM_PING 2
+
+Если PING работает — значит цепочка связи настроена правильно.
+
+
+Как подключить к Streamer.bot / SAMMI / любому софту
+----------------------------------------------------
+Нужен любой экшен типа "Run program" / "Execute" / "Launch".
+
+Program (путь к программе):
+  <Skyrim>\Data\TDL\Tools\tdl_send.exe
+
+Arguments (аргументы):
+  NORMAL SYSTEM_PING 2
+  NORMAL SUMMON_SKELETON 2
+  FORCE1 SYSTEM_HEALING
+  FORCE SUMMON_DRAGON 10 1.0
+
+Примечание:
+- Символ "|" в аргументах не используется.
+- tdl_send.exe сам сформирует строку и отправит её в named pipe.
+
+
+Где смотреть логи
+----------------
+1) Лог DLL/SKSE (загрузка плагина, старт pipe, принятые сообщения):
+   Documents\My Games\Skyrim Special Edition\SKSE\TDL_StreamPlugin.log
+
+2) Логи Papyrus (принял/отклонил действие, причины):
+   - основной лог Papyrus:
+     Documents\My Games\Skyrim Special Edition\Logs\Script\Papyrus.0.log
+   - если в моде включён отдельный файл лога TDL:
+     Documents\My Games\Skyrim Special Edition\Logs\Script\User\TDL.0.log
+
+
+Обычные команды (основной режим)
+--------------------------------
+Логический формат протокола (как это едет по pipe):
+  ACTION|SOURCE
+
+Где:
+  ACTION — идентификатор действия (см. список ниже)
+  SOURCE (приоритет источника):
+    1 = beats   (выше приоритет)
+    2 = points
+    3 = vote    (ниже приоритет)
+
+Фактический запуск через tdl_send.exe (БЕЗ "|"):
+  tdl_send.exe NORMAL ACTION [SOURCE]
+
+Если SOURCE не указан — рекомендуется использовать 2 (points).
+
+Примеры:
+  tdl_send.exe NORMAL SYSTEM_PING 2
+  tdl_send.exe NORMAL WEATHER_RAIN 1
+  tdl_send.exe NORMAL TELEPORT_RANDOM_CITY 3
+
+
+Список ACTION (обычные команды)
+------------------------------
+1) Проверка связи
+  SYSTEM_PING
+
+2) Хил / благословение
+  SYSTEM_HEALING
+  SYSTEM_BLESSING
+
+3) Призывы
+  SUMMON_ANY
+  SUMMON_SKELETON
+  SUMMON_ANIMAL
+  SUMMON_HUMANOID
+  SUMMON_UNDEAD
+  SUMMON_STRONG
+  SUMMON_DRAGON
+
+4) Охотник
+  HUNTER_START
+
+5) Шоу
+  COMEDY_FAKE_HERO
+  COMEDY_HORROR
+  COMEDY_ARENA
+  COMEDY_ESCORT
+
+6) Хаос
+  CHAOS_LOW_G
+  CHAOS_BACKFIRE
+
+7) Инвентарь
+  INVENTORY_SCATTER
+  INVENTORY_DROP_ALL
+
+8) Телепорт
+  TELEPORT_RANDOM_CITY
+  TELEPORT_RANDOM_DANGER
+  TELEPORT_HIGH_HROTHGAR
+  TELEPORT_WHITERUN
+  TELEPORT_SOLITUDE
+  TELEPORT_WINDHELM
+  TELEPORT_RIFTEN
+  TELEPORT_MARKARTH
+  TELEPORT_FALKREATH
+  TELEPORT_DAWNSTAR
+
+9) Вирус
+  VIRUS_DISEASE
+  VIRUS_WEREWOLF
+  VIRUS_VAMPIRE
+
+10) Погода
+  WEATHER_CLEAR
+  WEATHER_RAIN
+  WEATHER_SNOW
+  WEATHER_STORM
+  WEATHER_FOG
+  WEATHER_RESET
+
+11) Гигантизм / скорость
+  GIGANT_BIG
+  GIGANT_SMALL
+  GIGANT_SPEED
+  GIGANT_SLOW
+  GIGANT_RESET
+
+FORCE-команды (ручной режим)
+----------------------------
+FORCE-команды НЕ предназначены для чата.
+Их запускают вручную стример/модераторы (или админ-интерфейс вашего софта).
+
+Есть два типа FORCE:
+
+1) FORCE1 (одиночный форс)
+   Логический формат (по pipe):
+     FORCE1|ACTION
+
+   Запуск через tdl_send.exe:
+     tdl_send.exe FORCE1 ACTION
+
+   Разрешённые ACTION:
+     SYSTEM_HEALING
+     WRATH_11
+     WRATH_12
+     WRATH_13
+
+   Примеры:
+     tdl_send.exe FORCE1 SYSTEM_HEALING
+     tdl_send.exe FORCE1 WRATH_12
+
+
+2) FORCE (серия BURST)
+   Логический формат (по pipe):
+     FORCE|ACTION|COUNT
+   или:
+     FORCE|ACTION|COUNT|INTERVAL
+
+   Запуск через tdl_send.exe:
+     tdl_send.exe FORCE ACTION COUNT [INTERVAL]
+
+   Если INTERVAL не указан — используется default из конфигурации (см. INI).
+
+   Ограничения (защита от опечаток):
+   - COUNT максимум 50 (жёсткий предел)
+   - INTERVAL clamp по умолчанию: 0.75 .. 5.0 сек
+   - TELEPORT_RANDOM_CITY / TELEPORT_RANDOM_DANGER: принудительный интервал 7..10 сек
+     (иначе возможна цепочка телепортов быстрее, чем проходит загрузка локации)
+
+   Разрешённые ACTION для серии и дополнительные лимиты:
+     - SUMMON_*                 : до 50
+     - INVENTORY_SCATTER        : до 10
+     - TELEPORT_RANDOM_CITY     : до 5
+     - TELEPORT_RANDOM_DANGER   : до 5
+     - VIRUS_DISEASE            : до 15
+
+   Примеры:
+     tdl_send.exe FORCE SUMMON_DRAGON 10
+     tdl_send.exe FORCE SUMMON_DRAGON 10 1.0
+     tdl_send.exe FORCE INVENTORY_SCATTER 10
+     tdl_send.exe FORCE TELEPORT_RANDOM_CITY 5
+     tdl_send.exe FORCE VIRUS_DISEASE 15 0.9
+
+
+Важное предупреждение (FORCE / BURST)
+-------------------------------------
+FORCE/BURST запускаются вручную и сознательно обходят обычные очереди и cooldown’ы.
+При большом количестве тяжёлых эффектов (например, массовые саммоны/спавн объектов/
+частые телепорты) движок Skyrim может не выдержать нагрузку: возможны сильные просадки FPS,
+зависания и краши. Запуская FORCE/BURST, вы принимаете этот риск на себя.
+
+STOP_ALL (пауза у бота) НЕ прерывает уже запущенный FORCE/BURST — она останавливает только
+дальнейший сбор и отправку событий ботом.
+
+
+Кулдауны: глобальная настройка через INI
+----------------------------------------
+Все кулдауны живут в:
+  Data\TDL\Config\TDL_Cooldowns.ini
+
+Принцип:
+- DLL читает INI при старте (обычно нужен перезапуск игры после изменения INI).
+- Бот может читать тот же INI и “стараться” планировать очередь, но стабильность не зависит от бота:
+  финальное ограничение/планирование выполняет DLL.
+- Если для ACTION указан явный cooldown — используется он.
+- Если cooldown для ACTION не указан — используется дефолт кулдауна группы (GroupDefaults).
+
+
+Права и управление (рекомендация для бота)
+------------------------------------------
+Стример:
+- может использовать все FORCE/ADMIN действия
+- может иметь эксклюзивную команду STOP_ALL (пауза планировщика бота)
+
+Модераторы:
+- могут использовать FORCE/ADMIN действия (по решению стримера/настроек бота)
+- могут не иметь доступа к STOP_ALL (если так настроено)
+
+Чат:
+- не должен иметь доступа к FORCE/ADMIN
+- влияет на игру только через points/beats/vote (если включено)
+
+
+Голосование (максимально простое, если вы используете бота)
+-----------------------------------------------------------
+Стример включает голосование на 2–5 вариантов.
+Чат голосует:
+  !1 ... !5   (или просто 1 ... 5)
+
+Правила:
+- 1 человек = 1 голос
+- суммируем голоса за варианты
+- победитель — вариант с наибольшим числом голосов
+- при равенстве побеждает вариант, за который был отдан ПОСЛЕДНИЙ голос
+- по завершении голосования бот отправляет в DLL одну команду победителя (SOURCE=3)
+
+
+Как тестировать прямо сейчас (минимум)
+--------------------------------------
+1) Запустить игру и загрузить сохранение.
+2) Проверить пинг:
+   tdl_send.exe NORMAL SYSTEM_PING 2
+3) Проверить обычную команду:
+   tdl_send.exe NORMAL SUMMON_SKELETON 2
+4) Проверить FORCE1:
+   tdl_send.exe FORCE1 SYSTEM_HEALING
+
+
+Типичные проблемы
+-----------------
+1) Команда не отправляется / ошибка подключения:
+   - игра не запущена или сохранение ещё не загружено
+   - SKSE-плагин не загрузился (проверьте TDL_StreamPlugin.log)
+
+2) Команда отправляется, но действие не запускается:
+   - действие отклонено из-за приоритета или cooldown (смотрите логи Papyrus и/или TDL.0.log)
+   - действие отключено в настройках/таблице мода
+
+Подсказка
+---------
+Для диагностики всегда используйте:
+  tdl_send.exe NORMAL SYSTEM_PING 2
+Если PING работает — значит цепочка связи настроена правильно.
