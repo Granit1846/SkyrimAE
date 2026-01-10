@@ -6,6 +6,9 @@
 #include <SKSE/Events.h>
 #include <SKSE/Interfaces.h>
 
+#include <RE/T/TESDataHandler.h>
+#include <RE/T/TESGlobal.h>
+
 #include <Windows.h>
 
 #ifdef min
@@ -30,6 +33,7 @@
 #include <mutex>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <thread>
 #include <vector>
 
@@ -86,6 +90,260 @@ namespace
 		}
 	}
 
+
+	static std::string ToLowerASCII(std::string s)
+	{
+		for (auto& ch : s) {
+			if (ch >= 'A' && ch <= 'Z') {
+				ch = static_cast<char>(ch - 'A' + 'a');
+			}
+		}
+		return s;
+	}
+
+	static bool TryParseBoolOrDouble(const std::string& s, double& out)
+	{
+		const auto t = ToLowerASCII(Trim(s));
+		if (t == "true" || t == "yes" || t == "on") {
+			out = 1.0;
+			return true;
+		}
+		if (t == "false" || t == "no" || t == "off") {
+			out = 0.0;
+			return true;
+		}
+		return TryParseDouble(t, out);
+	}
+
+	static std::unordered_map<std::string, std::unordered_map<std::string, std::string>>
+	LoadIniKeyValues(const std::filesystem::path& iniPath)
+	{
+		std::unordered_map<std::string, std::unordered_map<std::string, std::string>> out;
+
+		std::ifstream f(iniPath);
+		if (!f.is_open()) {
+			return out;
+		}
+
+		std::string section;
+		std::string line;
+		while (std::getline(f, line)) {
+			line = Trim(line);
+			if (IsCommentOrEmpty(line)) {
+				continue;
+			}
+
+			if (line.size() >= 2 && line.front() == '[' && line.back() == ']') {
+				section = ToLowerASCII(Trim(line.substr(1, line.size() - 2)));
+				continue;
+			}
+
+			const auto eq = line.find('=');
+			if (eq == std::string::npos) {
+				continue;
+			}
+
+			const auto key = ToLowerASCII(Trim(line.substr(0, eq)));
+			const auto val = Trim(line.substr(eq + 1));
+			if (key.empty()) {
+				continue;
+			}
+
+			out[section][key] = val;
+		}
+
+		return out;
+	}
+
+	static std::unordered_map<std::uint32_t, RE::TESGlobal*> g_globalsByLocalIDCache;
+
+static RE::TESGlobal* LookupGlobalByLocalFormID_Cached(std::uint32_t localFormID)
+{
+	if (localFormID == 0) {
+		return nullptr;
+	}
+
+	if (auto it = g_globalsByLocalIDCache.find(localFormID); it != g_globalsByLocalIDCache.end()) {
+		return it->second;
+	}
+
+	auto* dh = RE::TESDataHandler::GetSingleton();
+	if (!dh) {
+		return nullptr;
+	}
+
+	// Primary plugin name (repo/install)
+	if (auto* gv = dh->LookupForm<RE::TESGlobal>(localFormID, "TwitchDragonbornLegacy.esp")) {
+		g_globalsByLocalIDCache.emplace(localFormID, gv);
+		return gv;
+	}
+
+	// Fallback (older typo in some builds)
+	if (auto* gv = dh->LookupForm<RE::TESGlobal>(localFormID, "TwichDragonbornLegacy.esp")) {
+		g_globalsByLocalIDCache.emplace(localFormID, gv);
+		return gv;
+	}
+
+	return nullptr;
+}
+
+	static void SetGlobalValue(RE::TESGlobal* gv, double v)
+	{
+		if (!gv) {
+			return;
+		}
+		gv->value = static_cast<float>(v);
+	}
+
+	struct IniToGlobalMap
+{
+	const char* section;
+	const char* key;
+	std::uint32_t globalLocalFormID;
+	double scale = 1.0;
+};
+
+static constexpr IniToGlobalMap kGameplayIniMap[] = {
+	// NOTE:
+	// - We deliberately bind globals by *local FormID* (lower 24 bits) + plugin filename.
+	// - Runtime EditorID lookup is not reliable (EditorIDs are usually not present in-memory).
+
+	// ===== CHAOS ===== (TDL_MCM_Chaos properties)
+	{ "chaos", "backfirechance",      0x03CACD }, // TDL_Backfire_Chance
+	{ "chaos", "backfireduration",    0x03CACC }, // TDL_Backfire_Duration
+	{ "chaos", "shoutpushforce",      0x03CAD0 }, // TDL_ShoutPushForce
+	{ "chaos", "shoutpushdelay",      0x03F9A2 }, // TDL_ShoutPushDelay
+	{ "chaos", "knockbackforce",      0x03F99D }, // TDL_KnockbackForce
+	{ "chaos", "knockbackcooldown",   0x03F99E }, // TDL_KnockbackCooldown
+	{ "chaos", "knockbackradius",     0x03F99C }, // TDL_KnockbackRadius
+	{ "chaos", "knockbackmeleedelay", 0x03F9A5 }, // TDL_KnockbackMeleeDelay
+	{ "chaos", "knockbackbowdelay",   0x09B6CD }, // TDL_KnockbackBowDelay
+
+	// ===== INVENTORY ===== (TDL_MCM_Inventory properties)
+	{ "inventory", "scatterexactcount",    0x04B4C9 }, // TDL_InvSpam_RollsGV
+	{ "inventory", "scattermincount",      0x04B4CA }, // TDL_InvSpam_CountMinGV
+	{ "inventory", "scattermaxcount",      0x04B4CB }, // TDL_InvSpam_CountMaxGV
+	{ "inventory", "scatterradius",        0x04B4D2 }, // TDL_InvSpam_RadiusGV
+	{ "inventory", "dropbatchsize",        0x04B4CC }, // TDL_InvDrop_BatchSizeGV
+	{ "inventory", "dropinterval",         0x04B4CD }, // TDL_InvDrop_IntervalGV
+	{ "inventory", "droptimeout",          0x04B4C7 }, // TDL_InvDrop_Timeout
+	{ "inventory", "protecttokensbyname",  0x04B4CE }, // TDL_InvProtectTokensByNameGV
+	{ "inventory", "dropshowprogress",     0x04B4C8 }, // TDL_InvDrop_ShowProgress
+
+	// ===== WRATH ===== (Wrath_* globals already match)
+	{ "wrath", "totalbursts",        0x062B45 }, // Wrath_TotalBurstsGV
+	{ "wrath", "interval",           0x062B46 }, // Wrath_EffectIntervalGV
+	{ "wrath", "radius",             0x062B47 }, // Wrath_RadiusGV
+	{ "wrath", "zoffset",            0x062B48 }, // Wrath_ZOffsetGV
+	{ "wrath", "damagemin",          0x062B43 }, // Wrath_DamageMinGV
+	{ "wrath", "damagemax",          0x062B44 }, // Wrath_DamageMaxGV
+	{ "wrath", "firedamagemult",     0x062B4C }, // Wrath_FireDamageMultGV
+	{ "wrath", "stormmagickamult",   0x062B50 }, // Wrath_StormMagickaMultGV
+	{ "wrath", "froststaminamult",   0x062B4D }, // Wrath_FrostStaminaMultGV
+	{ "wrath", "levelscale",         0x062B4F }, // Wrath_LevelScaleGV
+	{ "wrath", "levelcap",           0x062B4E }, // Wrath_LevelCapGV
+	{ "wrath", "shakechance",        0x062B49 }, // Wrath_ShakeChanceGV
+	{ "wrath", "shakestrength",      0x062B4A }, // Wrath_ShakeStrengthGV
+	{ "wrath", "shakeduration",      0x062B4B }, // Wrath_ShakeDurationGV
+
+	// ===== HUNTER ===== (TDL_MCM_Hunter properties)
+	{ "hunter", "duration",          0x030F92 }, // HunterDuration
+	{ "hunter", "reaggrointerval",   0x030F93 }, // ReAggroInterval
+	{ "hunter", "maxdistance",       0x030F94 }, // MaxDistance
+	{ "hunter", "spawnoffset",       0x030F95 }, // SpawnOffset
+	{ "hunter", "corpselifetime",    0x05FC7A }, // HunterCorpseLifetime
+
+	// ===== GIGANT ===== (TDL_MCM_Gigant properties)
+	{ "gigant", "sizeduration",      0x07441B }, // Gigant_SizeDurationGV
+	{ "gigant", "speedduration",     0x07441C }, // Gigant_SpeedDurationGV
+	{ "gigant", "scalebig",          0x0688EF }, // Gigant_ScaleBigGV
+	{ "gigant", "damagebig",         0x0688F1 }, // Gigant_DamageBigGV
+	{ "gigant", "scalesmall",        0x0688F0 }, // Gigant_ScaleSmallGV
+	{ "gigant", "damagesmall",       0x0688F2 }, // Gigant_DamageSmallGV
+	{ "gigant", "speedfast",         0x0688F3 }, // Gigant_SpeedMultGV
+	{ "gigant", "speedslow",         0x0688F4 }, // Gigant_SpeedSlowGV
+
+	// ===== COMEDY ===== (TDL_MCM_Comedy properties)
+	{ "comedy", "fakeheroduration",		 0x04E3AA }, // FakeHeroDuration
+	{ "comedy", "fakeheroactioninterval",		 0x05CDAC }, // FakeHeroActionInterval
+	{ "comedy", "fakeherodamagemult",		 0x04E3AE }, // FakeHeroDamageMult
+	{ "comedy", "fakeheropushforce",		 0x05CDAD }, // FakeHeroPushForce
+	{ "comedy", "fakeheroshoutchance",		 0x05FC77 }, // FakeHeroShoutChance
+	{ "comedy", "fakeherospellchance",		 0x05CDAB }, // FakeHeroSpellChance
+	{ "comedy", "horrorduration",		 0x04E3AF }, // HorrorDuration
+	{ "comedy", "horrorspawn",		 0x04E3B0 }, // HorrorSpawnDistance
+	{ "comedy", "horrorteleport",		 0x04E3B1 }, // HorrorTeleportDistance
+	{ "comedy", "horrormaxdist",		 0x04E3B2 }, // HorrorMaxDistance
+	{ "comedy", "horrorhealth",		 0x04E3B3 }, // HorrorHealth
+	{ "comedy", "arenawaves",		 0x04E3A2 }, // ArenaWaves
+	{ "comedy", "arenaperwave",		 0x04E39F }, // ArenaPerWave
+	{ "comedy", "arenainterval",		 0x04E3A1 }, // ArenaWaveInterval
+	{ "comedy", "arenaradius",		 0x04E3A0 }, // ArenaSpawnRadius
+	{ "comedy", "escortduration",		 0x065A1D }, // EscortDuration
+};
+
+	
+	static void ReloadGameplayConfigFromIni_OnGameThread()
+	{
+		const std::filesystem::path iniPath =
+			std::filesystem::current_path() / "Data" / "SKSE" / "Plugins" / "TDL_StreamPlugin.ini";
+
+		const auto kv = LoadIniKeyValues(iniPath);
+		if (kv.empty()) {
+			spdlog::warn("Gameplay INI not found or empty: '{}'", iniPath.string());
+			return;
+		}
+
+		int applied = 0;
+		int missingGlobals = 0;
+
+		g_globalsByLocalIDCache.clear();
+
+		for (const auto& m : kGameplayIniMap) {
+			auto sit = kv.find(m.section);
+			if (sit == kv.end()) {
+				continue;
+			}
+
+			auto kit = sit->second.find(m.key);
+			if (kit == sit->second.end()) {
+				continue;
+			}
+
+			double dv = 0.0;
+			if (!TryParseBoolOrDouble(kit->second, dv)) {
+				spdlog::warn("Gameplay INI parse failed: [{}] {}='{}'", m.section, m.key, kit->second);
+				continue;
+			}
+
+			dv *= m.scale;
+
+			auto* gv = LookupGlobalByLocalFormID_Cached(m.globalLocalFormID);
+			if (!gv) {
+				missingGlobals++;
+				spdlog::warn("TESGlobal not found by FormID: 0x{:06X}", m.globalLocalFormID);
+				continue;
+			}
+
+			SetGlobalValue(gv, dv);
+			applied++;
+		}
+
+		spdlog::info("Gameplay config applied: updatedGlobals={}, missingGlobals={}, file='{}'",
+			applied, missingGlobals, iniPath.string());
+	}
+
+	static void QueueReloadGameplayConfig()
+	{
+		if (auto* tasks = SKSE::GetTaskInterface(); tasks) {
+			tasks->AddTask([] {
+				ReloadGameplayConfigFromIni_OnGameThread();
+				});
+		}
+		else {
+			spdlog::warn("TaskInterface not available (cannot apply gameplay config)");
+		}
+	}
 	static const char* GroupNameFromAction(const std::string& a)
 	{
 		if (a.rfind("SYSTEM_", 0) == 0) return "SYSTEM";
@@ -390,6 +648,15 @@ namespace
 		if (parts.empty()) {
 			return std::nullopt;
 		}
+
+		// Special internal command (handled in DLL, not sent to Papyrus)
+		// tdl_send.exe NORMAL SYSTEM_RELOAD_CONFIG 2  ->  "SYSTEM_RELOAD_CONFIG|2"
+		if (parts[0] == "SYSTEM_RELOAD_CONFIG") {
+			spdlog::info("SYSTEM_RELOAD_CONFIG requested");
+			QueueReloadGameplayConfig();
+			return std::nullopt;
+		}
+
 
 		// FORCE burst: FORCE|ACTION|COUNT or FORCE|ACTION|COUNT|INTERVAL
 		if (parts[0] == "FORCE") {
@@ -751,6 +1018,9 @@ void TDL_StartPipeServer()
 
 	// load INI config (cooldowns, force intervals)
 	LoadTDLConfigIni();
+
+	// apply gameplay INI (TDL_StreamPlugin.ini -> TESGlobal)
+	QueueReloadGameplayConfig();
 
 	spdlog::info("Starting Pipe/Scheduler...");
 

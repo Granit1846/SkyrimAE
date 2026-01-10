@@ -1,0 +1,27 @@
+--- TDL_PipeServer_v3.cpp
++++ TDL_PipeServer_v4.cpp
+@@ -262,6 +262,24 @@
+ 	{ "gigant", "damagesmall",       0x0688F2 }, // Gigant_DamageSmallGV
+ 	{ "gigant", "speedfast",         0x0688F3 }, // Gigant_SpeedMultGV
+ 	{ "gigant", "speedslow",         0x0688F4 }, // Gigant_SpeedSlowGV
++
++	// ===== COMEDY ===== (TDL_MCM_Comedy properties)
++	{ "comedy", "fakeheroduration",		 0x04E3AA }, // FakeHeroDuration
++	{ "comedy", "fakeheroactioninterval",		 0x05CDAC }, // FakeHeroActionInterval
++	{ "comedy", "fakeherodamagemult",		 0x04E3AE }, // FakeHeroDamageMult
++	{ "comedy", "fakeheropushforce",		 0x05CDAD }, // FakeHeroPushForce
++	{ "comedy", "fakeheroshoutchance",		 0x05FC77 }, // FakeHeroShoutChance
++	{ "comedy", "fakeherospellchance",		 0x05CDAB }, // FakeHeroSpellChance
++	{ "comedy", "horrorduration",		 0x04E3AF }, // HorrorDuration
++	{ "comedy", "horrorspawn",		 0x04E3B0 }, // HorrorSpawnDistance
++	{ "comedy", "horrorteleport",		 0x04E3B1 }, // HorrorTeleportDistance
++	{ "comedy", "horrormaxdist",		 0x04E3B2 }, // HorrorMaxDistance
++	{ "comedy", "horrorhealth",		 0x04E3B3 }, // HorrorHealth
++	{ "comedy", "arenawaves",		 0x04E3A2 }, // ArenaWaves
++	{ "comedy", "arenaperwave",		 0x04E39F }, // ArenaPerWave
++	{ "comedy", "arenainterval",		 0x04E3A1 }, // ArenaWaveInterval
++	{ "comedy", "arenaradius",		 0x04E3A0 }, // ArenaSpawnRadius
++	{ "comedy", "escortduration",		 0x065A1D }, // EscortDuration
+ };
+ 
+ 	

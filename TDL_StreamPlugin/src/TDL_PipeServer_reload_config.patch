@@ -1,0 +1,291 @@
+--- TDL_PipeServer.cpp
++++ TDL_PipeServer.cpp
+@@ -5,6 +5,9 @@
+ #include <SKSE/API.h>
+ #include <SKSE/Events.h>
+ #include <SKSE/Interfaces.h>
++
++#include <RE/T/TESDataHandler.h>
++#include <RE/T/TESGlobal.h>
+ 
+ #include <Windows.h>
+ 
+@@ -30,6 +33,7 @@
+ #include <mutex>
+ #include <optional>
+ #include <string>
++#include <string_view>
+ #include <thread>
+ #include <vector>
+ 
+@@ -86,6 +90,244 @@
+ 		}
+ 	}
+ 
++
++	static std::string ToLowerASCII(std::string s)
++	{
++		for (auto& ch : s) {
++			if (ch >= 'A' && ch <= 'Z') {
++				ch = static_cast<char>(ch - 'A' + 'a');
++			}
++		}
++		return s;
++	}
++
++	static bool TryParseBoolOrDouble(const std::string& s, double& out)
++	{
++		const auto t = ToLowerASCII(Trim(s));
++		if (t == "true" || t == "yes" || t == "on") {
++			out = 1.0;
++			return true;
++		}
++		if (t == "false" || t == "no" || t == "off") {
++			out = 0.0;
++			return true;
++		}
++		return TryParseDouble(t, out);
++	}
++
++	static std::unordered_map<std::string, std::unordered_map<std::string, std::string>>
++	LoadIniKeyValues(const std::filesystem::path& iniPath)
++	{
++		std::unordered_map<std::string, std::unordered_map<std::string, std::string>> out;
++
++		std::ifstream f(iniPath);
++		if (!f.is_open()) {
++			return out;
++		}
++
++		std::string section;
++		std::string line;
++		while (std::getline(f, line)) {
++			line = Trim(line);
++			if (IsCommentOrEmpty(line)) {
++				continue;
++			}
++
++			if (line.size() >= 2 && line.front() == '[' && line.back() == ']') {
++				section = ToLowerASCII(Trim(line.substr(1, line.size() - 2)));
++				continue;
++			}
++
++			const auto eq = line.find('=');
++			if (eq == std::string::npos) {
++				continue;
++			}
++
++			const auto key = ToLowerASCII(Trim(line.substr(0, eq)));
++			const auto val = Trim(line.substr(eq + 1));
++			if (key.empty()) {
++				continue;
++			}
++
++			out[section][key] = val;
++		}
++
++		return out;
++	}
++
++	static std::unordered_map<std::string, RE::TESGlobal*> g_globalsCache;
++
++	static RE::TESGlobal* LookupGlobalByEditorID_Cached(std::string_view editorID)
++	{
++		if (editorID.empty()) {
++			return nullptr;
++		}
++
++		auto cacheKey = ToLowerASCII(std::string(editorID));
++
++		if (auto it = g_globalsCache.find(cacheKey); it != g_globalsCache.end()) {
++			return it->second;
++		}
++
++		auto* dh = RE::TESDataHandler::GetSingleton();
++		if (!dh) {
++			g_globalsCache.emplace(std::move(cacheKey), nullptr);
++			return nullptr;
++		}
++
++		const auto& globals = dh->GetFormArray<RE::TESGlobal>();
++		for (auto* gv : globals) {
++			if (!gv) {
++				continue;
++			}
++
++			const char* ed = gv->GetFormEditorID();
++			if (!ed) {
++				continue;
++			}
++
++			if (ToLowerASCII(ed) == cacheKey) {
++				g_globalsCache.emplace(std::move(cacheKey), gv);
++				return gv;
++			}
++		}
++
++		g_globalsCache.emplace(std::move(cacheKey), nullptr);
++		return nullptr;
++	}
++
++	static void SetGlobalValue(RE::TESGlobal* gv, double v)
++	{
++		if (!gv) {
++			return;
++		}
++		gv->value = static_cast<float>(v);
++	}
++
++	struct IniToGlobalMap
++	{
++		const char* section;
++		const char* key;
++		const char* globalEditorID;
++		double scale = 1.0;
++	};
++
++	static constexpr IniToGlobalMap kGameplayIniMap[] = {
++		// ===== CHAOS =====
++		{ "chaos", "backfirechance",     "Backfire_ChanceGV" },
++		{ "chaos", "backfireduration",   "Backfire_DurationGV" },
++		{ "chaos", "shoutpushforce",     "ShoutPushForceGV" },
++		{ "chaos", "shoutpushdelay",     "ShoutPushDelayGV" },
++		{ "chaos", "knockbackforce",     "KnockbackForceGV" },
++		{ "chaos", "knockbackcooldown",  "KnockbackCooldownGV" },
++		{ "chaos", "knockbackradius",    "KnockbackRadiusGV" },
++		{ "chaos", "knockbackmeleedelay","KnockbackMeleeDelayGV" },
++		{ "chaos", "knockbackbowdelay",  "KnockbackBowDelayGV" },
++
++		// ===== INVENTORY =====
++		{ "inventory", "scatterexactcount", "InvSpam_RollsGV" },
++		{ "inventory", "scattermincount",   "InvSpam_CountMinGV" },
++		{ "inventory", "scattermaxcount",   "InvSpam_CountMaxGV" },
++		{ "inventory", "scatterradius",     "InvSpam_RadiusGV" },
++		{ "inventory", "dropbatchsize",     "InvDrop_BatchSizeGV" },
++		{ "inventory", "dropinterval",      "InvDrop_IntervalGV" },
++		{ "inventory", "droptimeout",       "InvDrop_TimeoutGV" },
++		{ "inventory", "protecttokensbyname", "InvProtectTokensByNameGV" },
++		{ "inventory", "dropshowprogress",    "InvDrop_ShowProgressGV" },
++
++		// ===== WRATH =====
++		{ "wrath", "totalbursts",        "Wrath_TotalBurstsGV" },
++		{ "wrath", "interval",           "Wrath_EffectIntervalGV" },
++		{ "wrath", "radius",             "Wrath_RadiusGV" },
++		{ "wrath", "zoffset",            "Wrath_ZOffsetGV" },
++		{ "wrath", "damagemin",          "Wrath_DamageMinGV" },
++		{ "wrath", "damagemax",          "Wrath_DamageMaxGV" },
++		{ "wrath", "firedamagemult",     "Wrath_FireDamageMultGV" },
++		{ "wrath", "stormmagickamult",   "Wrath_StormMagickaMultGV" },
++		{ "wrath", "froststaminamult",   "Wrath_FrostStaminaMultGV" },
++		{ "wrath", "levelscale",         "Wrath_LevelScaleGV" },
++		{ "wrath", "levelcap",           "Wrath_LevelCapGV" },
++		{ "wrath", "shakechance",        "Wrath_ShakeChanceGV" },
++		{ "wrath", "shakestrength",      "Wrath_ShakeStrengthGV" },
++		{ "wrath", "shakeduration",      "Wrath_ShakeDurationGV" },
++
++		// ===== HUNTER =====
++		{ "hunter", "duration",          "HunterDuration" },
++		{ "hunter", "reaggrointerval",   "reaggrointerval" },
++		{ "hunter", "maxdistance",       "maxdistance" },
++		{ "hunter", "spawnoffset",       "spawnoffset" },
++		{ "hunter", "corpselifetime",    "HunterCorpseLifetime" },
++
++		// ===== GIGANT =====
++		{ "gigant", "sizeduration",      "Gigant_SizeDurationGV" },
++		{ "gigant", "speedduration",     "Gigant_SpeedDurationGV" },
++		{ "gigant", "scalebig",          "Gigant_ScaleBigGV" },
++		{ "gigant", "damagebig",         "Gigant_DamageBigGV" },
++		{ "gigant", "scalesmall",        "Gigant_ScaleSmallGV" },
++		{ "gigant", "damagesmall",       "Gigant_DamageSmallGV" },
++		{ "gigant", "speedfast",         "Gigant_SpeedMultGV" },
++		{ "gigant", "speedslow",         "Gigant_SpeedSlowGV" },
++	};
++
++	static void ReloadGameplayConfigFromIni_OnGameThread()
++	{
++		const std::filesystem::path iniPath =
++			std::filesystem::current_path() / "Data" / "SKSE" / "Plugins" / "TDL_StreamPlugin.ini";
++
++		const auto kv = LoadIniKeyValues(iniPath);
++		if (kv.empty()) {
++			spdlog::warn("Gameplay INI not found or empty: '{}'", iniPath.string());
++			return;
++		}
++
++		int applied = 0;
++		int missingGlobals = 0;
++
++		for (const auto& m : kGameplayIniMap) {
++			auto sit = kv.find(m.section);
++			if (sit == kv.end()) {
++				continue;
++			}
++
++			auto kit = sit->second.find(m.key);
++			if (kit == sit->second.end()) {
++				continue;
++			}
++
++			double dv = 0.0;
++			if (!TryParseBoolOrDouble(kit->second, dv)) {
++				spdlog::warn("Gameplay INI parse failed: [{}] {}='{}'", m.section, m.key, kit->second);
++				continue;
++			}
++
++			dv *= m.scale;
++
++			auto* gv = LookupGlobalByEditorID_Cached(m.globalEditorID);
++			if (!gv) {
++				missingGlobals++;
++				spdlog::warn("TESGlobal not found by EditorID: '{}'", m.globalEditorID);
++				continue;
++			}
++
++			SetGlobalValue(gv, dv);
++			applied++;
++		}
++
++		spdlog::info("Gameplay config applied: updatedGlobals={}, missingGlobals={}, file='{}'",
++			applied, missingGlobals, iniPath.string());
++	}
++
++	static void QueueReloadGameplayConfig()
++	{
++		if (auto* tasks = SKSE::GetTaskInterface(); tasks) {
++			tasks->AddTask([] {
++				ReloadGameplayConfigFromIni_OnGameThread();
++				});
++		}
++		else {
++			spdlog::warn("TaskInterface not available (cannot apply gameplay config)");
++		}
++	}
+ 	static const char* GroupNameFromAction(const std::string& a)
+ 	{
+ 		if (a.rfind("SYSTEM_", 0) == 0) return "SYSTEM";
+@@ -391,6 +633,15 @@
+ 			return std::nullopt;
+ 		}
+ 
++		// Special internal command (handled in DLL, not sent to Papyrus)
++		// tdl_send.exe NORMAL SYSTEM_RELOAD_CONFIG 2  ->  "SYSTEM_RELOAD_CONFIG|2"
++		if (parts[0] == "SYSTEM_RELOAD_CONFIG") {
++			spdlog::info("SYSTEM_RELOAD_CONFIG requested");
++			QueueReloadGameplayConfig();
++			return std::nullopt;
++		}
++
++
+ 		// FORCE burst: FORCE|ACTION|COUNT or FORCE|ACTION|COUNT|INTERVAL
+ 		if (parts[0] == "FORCE") {
+ 			if (parts.size() < 3) {
+@@ -752,6 +1003,9 @@
+ 	// load INI config (cooldowns, force intervals)
+ 	LoadTDLConfigIni();
+ 
++	// apply gameplay INI (TDL_StreamPlugin.ini -> TESGlobal)
++	QueueReloadGameplayConfig();
++
+ 	spdlog::info("Starting Pipe/Scheduler...");
+ 
+ 	g_schedThread = std::thread(SchedulerThreadProc);
