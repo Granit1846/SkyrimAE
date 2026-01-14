@@ -1,0 +1,87 @@
+TDL — диапазоны (min/max) и defaults из MCM-скриптов
+Сгенерировано: 2026-01-08
+
+Источник: файлы MCM (Papyrus) из проекта:
+- TDL_MCM_Chaos.txt
+- TDL_MCM_Inventory.txt
+- TDL_MCM_Comedy.txt
+- TDL_MCM_Hunter.txt
+- TDL_MCM_Wrath.txt
+- TDL_MCM_Gigant.txt
+
+Примечание:
+- range/step берутся из HandleSliderOpen (SetSliderDialogRange/Interval)
+- default берётся из HandleOptionDefault (клавиша R)
+- если default не указан, значит в скрипте нет явного Reset-to-default для этого слайдера.
+
+
+## CHAOS
+- $ChaosBackfireChance (GV=Backfire_ChanceGV; fmt={0}): default=20; range=0 .. 100; step=5
+- $ChaosBackfireDuration (GV=Backfire_DurationGV; fmt={0}): default=60; range=1 .. 600; step=5
+- $KnockbackBowDelay (GV=KnockbackBowDelayGV; fmt={2}): default=0.10; range=0.0 .. 0.5; step=0.01
+- $ChaosKnockbackCooldown (GV=KnockbackCooldownGV; fmt={2}): default=0.35; range=0.0 .. 2.0; step=0.05
+- $ChaosKnockbackForce (GV=KnockbackForceGV; fmt={0}): default=25; range=0 .. 200; step=5
+- $ChaosMeleeDelay (GV=KnockbackMeleeDelayGV; fmt={2}): default=0.10; range=0.0 .. 0.5; step=0.01
+- $ChaosKnockbackRadius (GV=KnockbackRadiusGV; fmt={0}): default=900; range=0 .. 20000; step=100
+- $ChaosShoutDelay (GV=ShoutPushDelayGV; fmt={2}): default=0.05; range=0.0 .. 0.5; step=0.01
+- $ChaosShoutForce (GV=ShoutPushForceGV; fmt={0}): default=20; range=0 .. 200; step=5
+
+## INVENTORY
+- $InventoryDropBatch (GV=InvDrop_BatchSizeGV; fmt={0}): default=10; range=1 .. 100; step=1
+- $InventoryDropInterval (GV=InvDrop_IntervalGV; fmt={2}): default=0.20; range=0.05 .. 1.0; step=0.01
+- $InventoryExactCount (GV=InvSpam_RollsGV; fmt={0}): default=0; range=0 .. 2000; step=1
+- $InventoryMaxCount (GV=InvSpam_CountMaxGV; fmt={0}): default=200; range=1 .. 2000; step=1
+- $InventoryMinCount (GV=InvSpam_CountMinGV; fmt={0}): default=150; range=1 .. 2000; step=1
+- $InventoryRadius (GV=InvSpam_RadiusGV; fmt={0}): default=800; range=100 .. 5000; step=50
+- $InventoryTimeout (GV=InvDrop_TimeoutGV; fmt={0}): default=30; range=5 .. 120; step=1
+
+## COMEDY
+- $ComedyArenaPerWave (GV=ArenaPerWave; fmt={0}): default=3; range=1 .. 20; step=1
+- $ComedyArenaRadius (GV=ArenaSpawnRadius; fmt={0}): default=800; range=200 .. 3000; step=100
+- $ComedyArenaInterval (GV=ArenaWaveInterval; fmt={2}): default=3.0; range=0.5 .. 10.0; step=0.5
+- $ComedyArenaWaves (GV=ArenaWaves; fmt={0}): default=3; range=1 .. 10; step=1
+- $ComedyEscortDuration (GV=EscortDuration; fmt={0}): default=120; range=30 .. 600; step=10
+- $ComedyFakeHeroActionInterval (GV=FakeHeroActionInterval; fmt={2}): default=3.0; range=0.5 .. 10.0; step=0.5
+- $ComedyFakeHeroDamageMult (GV=FakeHeroDamageMult; fmt={2}): default=1.0; range=0.2 .. 5.0; step=0.1
+- $ComedyFakeHeroDuration (GV=FakeHeroDuration; fmt={0}): default=120; range=10 .. 600; step=10
+- $ComedyFakeHeroPushForce (GV=FakeHeroPushForce; fmt={0}): default=5; range=0 .. 50; step=1
+- $ComedyFakeHeroShoutChance (GV=FakeHeroShoutChance; fmt={0}): default=30; range=0 .. 100; step=5
+- $ComedyFakeHeroSpellChance (GV=FakeHeroSpellChance; fmt={0}): default=30; range=0 .. 100; step=5
+- $ComedyHorrorDuration (GV=HorrorDuration; fmt={0}): default=120; range=10 .. 600; step=10
+- $ComedyHorrorHealth (GV=HorrorHealth; fmt={0}): default=300; range=50 .. 5000; step=50
+- $ComedyHorrorMaxDist (GV=HorrorMaxDistance; fmt={0}): default=3000; range=1000 .. 6000; step=250
+- $ComedyHorrorSpawn (GV=HorrorSpawnDistance; fmt={0}): default=800; range=200 .. 3000; step=100
+- $ComedyHorrorTeleport (GV=HorrorTeleportDistance; fmt={0}): default=600; range=200 .. 2000; step=100
+
+## HUNTER
+- $HunterCorpseTime (GV=HunterCorpseLifetime; fmt={0}): default=20; range=0 .. 300; step=5
+- $HunterDuration (GV=HunterDuration; fmt={0}): default=90; range=5 .. 600; step=5
+- $HunterMaxDistance (GV=MaxDistance; fmt={0}): default=5500; range=1500 .. 10000; step=250
+- $HunterReAggro (GV=ReAggroInterval; fmt={2}): default=4.0; range=1.0 .. 10.0; step=0.5
+- $HunterSpawnOffset (GV=SpawnOffset; fmt={0}): default=1200; range=300 .. 3000; step=100
+
+## WRATH
+- $WrathTotalBursts (GV=Wrath_TotalBurstsGV; fmt={0}): default=6; range=1 .. 50; step=1
+- $WrathDamageMax (GV=Wrath_DamageMaxGV; fmt={0}): default=15; range=1 .. 100; step=1
+- $WrathDamageMin (GV=Wrath_DamageMinGV; fmt={0}): default=5; range=1 .. 100; step=1
+- $WrathFireMult (GV=Wrath_FireDamageMultGV; fmt={2}): default=1.0; range=0.0 .. 5.0; step=0.05
+- $WrathFrostSta (GV=Wrath_FrostStaminaMultGV; fmt={2}): default=1.0; range=0.0 .. 5.0; step=0.05
+- $WrathInterval (GV=Wrath_EffectIntervalGV; fmt={2}): default=0.4; range=0.05 .. 2.0; step=0.05
+- $WrathLevelCap (GV=Wrath_LevelCapGV; fmt={2}): default=3.0; range=1.0 .. 5.0; step=0.1
+- $WrathLevelScale (GV=Wrath_LevelScaleGV; fmt={2}): default=0.0; range=0.0 .. 0.10; step=0.005
+- $WrathRadius (GV=Wrath_RadiusGV; fmt={0}): default=300; range=100 .. 2000; step=50
+- $WrathShakeChance (GV=Wrath_ShakeChanceGV; fmt={0}): default=0; range=0 .. 100; step=5
+- $WrathShakeDuration (GV=Wrath_ShakeDurationGV; fmt={2}): default=0.0; range=0.0 .. 1.0; step=0.05
+- $WrathShakeStrength (GV=Wrath_ShakeStrengthGV; fmt={2}): default=0.0; range=0.0 .. 1.0; step=0.05
+- $WrathStormMag (GV=Wrath_StormMagickaMultGV; fmt={2}): default=1.0; range=0.0 .. 5.0; step=0.05
+- $WrathZOffset (GV=Wrath_ZOffsetGV; fmt={0}): default=50; range=0 .. 500; step=10
+
+## GIGANT
+- $GigantDamageBig (GV=Gigant_DamageBigGV; fmt={2}): default=5; range=0.0 .. 10.0; step=1
+- $GigantDamageSmall (GV=Gigant_DamageSmallGV; fmt={2}): default=0.5; range=0.0 .. 1.0; step=0.1
+- $GigantScaleBig (GV=Gigant_ScaleBigGV; fmt={2}): default=2.0; range=0.1 .. 5.0; step=0.5
+- $GigantScaleSmall (GV=Gigant_ScaleSmallGV; fmt={2}): default=0.33; range=0.1 .. 1.0; step=0.05
+- $GigantSizeDuration (GV=Gigant_SizeDurationGV; fmt={0}): default=60; range=5 .. 600; step=5
+- $GigantSpeedDuration (GV=Gigant_SpeedDurationGV; fmt={0}): default=60; range=5 .. 600; step=5
+- $GigantSpeedFast (GV=Gigant_SpeedMultGV; fmt={0}): default=3 (не задано в HandleOptionDefault); range=1.0 .. 10.0; step=5.0
+- $GigantSpeedSlow (GV=Gigant_SpeedSlowGV; fmt={0}): default=0.5 (не задано в HandleOptionDefault); range=0.1 .. 1.0; step=5.0
