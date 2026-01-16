@@ -525,16 +525,6 @@ static constexpr IniToGlobalMap kGameplayIniMap[] = {
 		return s;
 	}
 
-	static std::size_t GetNormalQueueCapForGroup(int group) noexcept
-	{
-		// Default: 15 pending per group.
-		// Special groups: VIRUS/COMEDY/INVENTORY -> 8 pending per group.
-		if (group == GROUP_VIRUS || group == GROUP_COMEDY || group == GROUP_INVENTORY) {
-			return 8;
-		}
-		return 15;
-	}
-
 	static bool StartsWith(const std::string& s, const char* prefix)
 	{
 		return s.rfind(prefix, 0) == 0;
@@ -777,60 +767,34 @@ static constexpr IniToGlobalMap kGameplayIniMap[] = {
 		return cmd;
 	}
 
-	// Per-group bounded queue in DLL:
-	// - default: up to 15 pending Normal items per group
-	// - groups VIRUS/COMEDY/INVENTORY: up to 8 pending Normal items per group
-	// If the group is full, we replace the "worst" queued item in that group ONLY if the new item has higher priority.
-	// Priority: source 1 (beats) > 2 (points) > 3 (vote).
+	// 1 pending per group in DLL (predoctor), replace only if higher priority (lower source number)
 	static void EnqueueNormalOrReplaceByGroup(NormalItem&& item)
 	{
 		std::lock_guard lk(g_mtx);
 
-		const std::size_t cap = GetNormalQueueCapForGroup(item.group);
-
-		std::size_t count = 0;
-		std::size_t worstIdx = static_cast<std::size_t>(-1);
-		int worstSource = -1;
-		std::uint64_t worstSeq = 0;
-
-		for (std::size_t i = 0; i < g_cmds.size(); ++i) {
-			auto& c = g_cmds[i];
+		for (auto& c : g_cmds) {
 			if (c.type != CmdType::kNormal) {
 				continue;
 			}
-			if (c.normal.group != item.group) {
-				continue;
+			if (c.normal.group == item.group) {
+				if (item.source < c.normal.source) {
+					spdlog::info("Queue: REPLACE group={} '{}' src={} (was '{}' src={})",
+						item.group, item.action, item.source, c.normal.action, c.normal.source);
+					c.normal = std::move(item);
+					g_cv.notify_one();
+				}
+				else {
+					spdlog::info("Queue: DROP lower-prio group={} '{}' src={}", item.group, item.action, item.source);
+				}
+				return;
 			}
-
-			++count;
-
-			// Eviction candidate: lowest priority (max source); if tie, newest (max seq).
-			if (c.normal.source > worstSource || (c.normal.source == worstSource && c.normal.seq > worstSeq)) {
-				worstSource = c.normal.source;
-				worstSeq = c.normal.seq;
-				worstIdx = i;
-			}
-		}
-
-		if (count >= cap) {
-			if (worstIdx != static_cast<std::size_t>(-1) && item.source < worstSource) {
-				spdlog::info("Queue: REPLACE (cap {}) group={} '{}' src={} (was '{}' src={})",
-					cap, item.group, item.action, item.source, g_cmds[worstIdx].normal.action, g_cmds[worstIdx].normal.source);
-				g_cmds[worstIdx].normal = std::move(item);
-				g_cv.notify_one();
-			}
-			else {
-				spdlog::info("Queue: DROP (cap {}) group={} '{}' src={}", cap, item.group, item.action, item.source);
-			}
-			return;
 		}
 
 		Command cmd{};
 		cmd.type = CmdType::kNormal;
 		cmd.normal = std::move(item);
 		g_cmds.push_back(std::move(cmd));
-		spdlog::info("Queue: PUSH group={} '{}' src={} ({} / {})",
-			g_cmds.back().normal.group, g_cmds.back().normal.action, g_cmds.back().normal.source, (count + 1), cap);
+		spdlog::info("Queue: PUSH group={} '{}' src={}", g_cmds.back().normal.group, g_cmds.back().normal.action, g_cmds.back().normal.source);
 		g_cv.notify_one();
 	}
 
@@ -918,8 +882,8 @@ static constexpr IniToGlobalMap kGameplayIniMap[] = {
 					}
 
 					if (bestIdx == static_cast<size_t>(-1)) {
-						// Wait until the earliest cooldown expires OR a new command arrives (notify_one).
-						g_cv.wait_until(lk, wakeAt);
+						lk.unlock();
+						std::this_thread::sleep_until(wakeAt);
 						continue;
 					}
 
