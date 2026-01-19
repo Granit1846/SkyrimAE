@@ -32,7 +32,7 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         "${TDL_GAME_DIR}/Data/SKSE/Plugins/${PROJECT_NAME}.dll"
 )
 # ---- Silent pipe sender (no console) ----
-add_executable(tdl_send WIN32
+add_executable(tdl_send
     src/tools/tdl_send.cpp
 )
 
@@ -49,6 +49,6 @@ add_custom_command(TARGET tdl_send POST_BUILD
 # Make tdl_send.exe portable (no VC++ Redist needed)
 if (MSVC)
   set_property(TARGET tdl_send PROPERTY MSVC_RUNTIME_LIBRARY
-    "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+    "MultiThreadedDLL$<$<CONFIG:Debug>:Debug>")
 endif()
 
