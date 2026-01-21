@@ -9,9 +9,11 @@ find_package(CommonLibSSE CONFIG REQUIRED)
 
 add_commonlibsse_plugin(${PROJECT_NAME}
     SOURCES
-        src/main.cpp
-        src/TDL_PipeServer.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/TDL_PipeServer.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/TDL_MenuHook.cpp
 )
+
 
 # Принудительно подключаем твой PCH.h ко всем единицам трансляции
 target_compile_options(${PROJECT_NAME} PRIVATE "/FI${CMAKE_CURRENT_SOURCE_DIR}/PCH.h")
@@ -34,7 +36,7 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 # ---- Silent pipe sender (no console) ----
 add_executable(tdl_send
     src/tools/tdl_send.cpp
-)
+ "src/TDL_MenuHook.h")
 
 target_compile_features(tdl_send PRIVATE cxx_std_20)
 target_compile_definitions(tdl_send PRIVATE UNICODE _UNICODE NOMINMAX)

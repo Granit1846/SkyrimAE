@@ -1,6 +1,6 @@
 ﻿// src/main.cpp
 #include "TDL_PipeServer.h"
-
+#include "TDL_MenuHook.h" 
 #include <SKSE/SKSE.h>
 
 #include <spdlog/sinks/basic_file_sink.h>
@@ -31,6 +31,18 @@ SKSEPluginLoad(const SKSE::LoadInterface* skse)
 {
 	SKSE::Init(skse);
 	SetupLog();
+
+	// Устанавливаем хук ДО загрузки данных
+	TDL::InstallStageHook();  // ← добавлено
+
+	if (auto* msg = SKSE::GetMessagingInterface(); msg) {
+		msg->RegisterListener([](SKSE::MessagingInterface::Message* m) {
+			if (m->type == SKSE::MessagingInterface::kDataLoaded) {
+				TDL_StartPipeServer();
+			}
+			});
+	}
+	return true;
 
 	spdlog::info("TDL_StreamPlugin: SKSEPluginLoad OK");
 
