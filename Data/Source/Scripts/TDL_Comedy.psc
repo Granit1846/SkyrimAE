@@ -62,17 +62,23 @@ Bool _lastWasInterior = false
 ; =====================================================
 ; ======================= STAGE 52 =====================
 ; =====================================================
+Actor Property PlayerRef Auto
+
 GlobalVariable Property ArenaWaves Auto
 GlobalVariable Property ArenaWaveInterval Auto
 GlobalVariable Property ArenaSpawnRadius Auto
 GlobalVariable Property ArenaPerWave Auto
+GlobalVariable Property ArenaTimeoutMinutes Auto
 
 Message Property ArenaRewardMessage_Normal Auto
 Message Property ArenaRewardMessage_Final Auto
+Message Property TDL_ArenaTimeoutPenaltyMsg Auto
 
 FormList Property TDL_EnemyLow Auto
 FormList Property TDL_EnemyMedium Auto
 FormList Property TDL_EnemyHard Auto
+
+Spell Property TDL_ArenaPenaltySpellTest Auto
 
 Bool _stage52Active = false
 Int _arenaState = 0 ; 1=wave, 2=wait
@@ -87,6 +93,7 @@ Int _arenaAllCount = 0
 
 Bool _arenaCleanupPending = false
 Float _arenaCorpseCleanupAt = 0.0
+Float _arenaTimeoutAt = 0.0
 
 ; =====================================================
 ; ======================= STAGE 53 =====================
@@ -406,6 +413,15 @@ Bool Function _StartStage52(Actor p)
 		Return False
 	EndIf
 
+	If !p
+		Return False
+	EndIf
+
+	; Safety: если прошлый забег завис/не дочистился — принудительно чистим
+	If _arenaAllCount > 0
+		_CleanupArenaAll()
+	EndIf
+
 	_stage52Active = true
 	_arenaState = 1
 	_arenaCurrentWave = 1
@@ -417,7 +433,33 @@ Bool Function _StartStage52(Actor p)
 	_arenaAllEnemies = new Actor[128]
 	_arenaAllCount = 0
 
+	_arenaCleanupPending = false
+	_arenaCorpseCleanupAt = 0.0
+
+	Float now = Utility.GetCurrentRealTime()
+
+	Float tmin = 0.0
+	If !ArenaTimeoutMinutes
+		_Notify("Stage52 ERROR: ArenaTimeoutMinutes property is None")
+		Return False
+	EndIf
+	tmin = ArenaTimeoutMinutes.GetValue()
+
+	If tmin < 1.0
+		tmin = 1.0
+	EndIf
+
+	_arenaTimeoutAt = now + (tmin * 60.0)
+
 	_SpawnArenaWave(p, 1)
+
+	; защита от "нулевой волны" (иначе _AllArenaWaveDead() вернёт True и выдаст награду сразу)
+	If _arenaWaveCount <= 0
+		_CleanupArenaAll()
+		_FinalizeStage52()
+		Return False
+	EndIf
+
 	RegisterForSingleUpdate(0.5)
 	Return True
 EndFunction
@@ -425,13 +467,20 @@ EndFunction
 Function _UpdateStage52()
 	Actor p = Game.GetPlayer()
 	If !p
-		_FinalizeStage52()
+		_HandleArenaTimeout()
+		Return
+	EndIf
+
+	Float now = Utility.GetCurrentRealTime()
+
+	; Таймаут: жёсткая очистка и сброс Stage 52 (без penalty/MessageBox)
+	If _arenaTimeoutAt > 0.0 && now >= _arenaTimeoutAt
+		_HandleArenaTimeout()
 		Return
 	EndIf
 
 	If _arenaState == 1
 		If !_AllArenaWaveDead()
-			RegisterForSingleUpdate(0.5)
 			Return
 		EndIf
 
@@ -439,13 +488,18 @@ Function _UpdateStage52()
 		If ArenaWaves
 			maxW = ArenaWaves.GetValueInt()
 		EndIf
+		If maxW < 1
+			maxW = 1
+		EndIf
 
 		If _arenaCurrentWave >= maxW
 			_GiveArenaReward_Final(p)
 			_ShowArenaRewardMessage_Final()
 
+			; после финала чистим всех противников (живых и трупы) с задержкой
 			_arenaCleanupPending = true
-			_arenaCorpseCleanupAt = Utility.GetCurrentRealTime() + 60.0
+			_arenaCorpseCleanupAt = now + 60.0
+
 			_FinalizeStage52()
 			Return
 		Else
@@ -453,8 +507,7 @@ Function _UpdateStage52()
 			_ShowArenaRewardMessage_Normal()
 
 			_arenaState = 2
-			_arenaStateTime = Utility.GetCurrentRealTime()
-			RegisterForSingleUpdate(0.5)
+			_arenaStateTime = now
 			Return
 		EndIf
 	EndIf
@@ -464,16 +517,24 @@ Function _UpdateStage52()
 		If ArenaWaveInterval
 			iv = ArenaWaveInterval.GetValue()
 		EndIf
+		If iv < 0.5
+			iv = 0.5
+		EndIf
 
-		If Utility.GetCurrentRealTime() < (_arenaStateTime + iv)
-			RegisterForSingleUpdate(0.5)
+		If now < (_arenaStateTime + iv)
 			Return
 		EndIf
 
 		_arenaCurrentWave += 1
 		_arenaState = 1
+
 		_SpawnArenaWave(p, _arenaCurrentWave)
-		RegisterForSingleUpdate(0.5)
+
+		; защита от "нулевой волны" на середине забега
+		If _arenaWaveCount <= 0
+			_HandleArenaTimeout()
+			Return
+		EndIf
 	EndIf
 EndFunction
 
@@ -488,17 +549,30 @@ Function _SpawnArenaWave(Actor p, Int wave)
 		lst = TDL_EnemyHard
 	EndIf
 
+	_arenaWaveCount = 0
+
+	If !lst || lst.GetSize() <= 0
+		Return
+	EndIf
+
 	Float r = 800.0
 	If ArenaSpawnRadius
 		r = ArenaSpawnRadius.GetValue()
+	EndIf
+	If r < 100.0
+		r = 100.0
 	EndIf
 
 	Int cnt = 3
 	If ArenaPerWave
 		cnt = ArenaPerWave.GetValueInt()
 	EndIf
-
-	_arenaWaveCount = 0
+	If cnt < 1
+		cnt = 1
+	EndIf
+	If cnt > 20
+		cnt = 20
+	EndIf
 
 	Int i = 0
 	While i < cnt
@@ -571,7 +645,7 @@ Function _CleanupArenaCorpses()
 	Int i = 0
 	While i < _arenaAllCount
 		Actor a = _arenaAllEnemies[i]
-		If a && a.IsDead()
+		If a
 			a.Disable()
 			a.Delete()
 		EndIf
@@ -583,6 +657,40 @@ Function _CleanupArenaCorpses()
 	_arenaCleanupPending = false
 	_arenaCorpseCleanupAt = 0.0
 EndFunction
+
+Function _CleanupArenaAll()
+	Int i = 0
+	While i < _arenaAllCount
+		Actor a = _arenaAllEnemies[i]
+		If a
+			a.Disable()
+			a.Delete()
+		EndIf
+		i += 1
+	EndWhile
+
+	_arenaAllCount = 0
+	_arenaWaveCount = 0
+	_arenaCleanupPending = false
+	_arenaCorpseCleanupAt = 0.0
+EndFunction
+
+Function _HandleArenaTimeout()
+	; жёсткая очистка (живые + трупы) и сброс Stage 52 (без penalty/MessageBox)
+	_CleanupArenaAll()
+	_FinalizeStage52()
+	_arenaTimeoutAt = 0.0
+	
+	If TDL_ArenaTimeoutPenaltyMsg
+		TDL_ArenaTimeoutPenaltyMsg.Show()
+	EndIf
+
+	If TDL_ArenaPenaltySpellTest 
+		TDL_ArenaPenaltySpellTest.Cast(PlayerRef, PlayerRef)
+	EndIf
+EndFunction
+
+
 
 ; =====================================================
 ; ======================= STAGE 53 =====================
@@ -828,7 +936,7 @@ Event OnUpdate()
 		EndIf
 	EndIf
 
-	If _stage50Active || _stage51Active || _stage52Active || _stage53Active
+	If _stage50Active || _stage51Active || _stage52Active || _stage53Active || _arenaCleanupPending
 		RegisterForSingleUpdate(0.5)
 	EndIf
 EndEvent

@@ -9,10 +9,10 @@ TDL_MCM_Gigant    Property GigantModule Auto
 TDL_MCM_Comedy    Property ComedyModule Auto
 TDL_MCM_Virus Property VirusModule Auto
 TDL_MCM_Teleport Property TeleportModule Auto
-TDL_MCM_Stream Property StreamModule Auto
+TDL_MCM_About Property AboutModule Auto
 
 Int Function GetVersion()
-    Return 26
+    Return 27
 EndFunction
 
 Event OnConfigInit()
@@ -28,7 +28,7 @@ Event OnConfigInit()
 	Pages[6] = "$TDL_PageComedy"
 	Pages[7] = "$TDL_PageVirus"
 	Pages[8] = "$TDL_PageTeleport"
-	Pages[9] = "$TDL_PageStream"
+	Pages[9] = "$TDL_PageAbout"
     
     Quest q = Self as Quest
     If q
@@ -59,11 +59,10 @@ Event OnConfigInit()
 	 If TeleportModule == None
 	      TeleportModule = q as TDL_MCM_Teleport
 	 EndIf
-	 If StreamModule == None
-		StreamModule = q as TDL_MCM_Stream
+	 If AboutModule == None
+	      AboutModule = q as TDL_MCM_About
 	 EndIf
     EndIf
-    
     Parent.OnConfigInit()
 EndEvent
 
@@ -106,10 +105,10 @@ Event OnPageReset(String page)
 	 TeleportModule.BuildPage(Self)
 	 Return
     EndIf
-    If page == "$TDL_PageStream" && StreamModule
-  	 StreamModule.BuildPage(Self)
-	 Return
-    EndIf
+	If page == "$TDL_PageAbout" && AboutModule
+		AboutModule.BuildPage(Self)
+		Return
+	EndIf
 EndEvent
 
 Event OnOptionSelect(Int option)
@@ -137,7 +136,7 @@ Event OnOptionSelect(Int option)
     If VirusModule && VirusModule.HandleOptionSelect(Self, option)
 	 Return
     EndIf
-    If StreamModule && StreamModule.HandleOptionSelect(Self, option)
+    If AboutModule && AboutModule.HandleOptionSelect(Self, option)
 	 Return
     EndIf
 EndEvent

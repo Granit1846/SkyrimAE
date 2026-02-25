@@ -41,6 +41,7 @@ Démarrage rapide (test manuel)
 
 Ping (recommandé en premier) :
   "CHEMIN_DU_JEU\Data\TDL\Tools\tdl_send.exe" NORMAL SYSTEM_PING 2
+  ("CHEMIN_DU_JEU\Data\TDL\Tools\send_raw.cmd" NORMAL SYSTEM_PING 2)
 
 Exemple pour une installation Steam standard (remplacez le chemin par le vôtre) :
   "F:\SteamLibrary\steamapps\common\Skyrim Special Edition\Data\TDL\Tools\tdl_send.exe" NORMAL SYSTEM_PING 2

@@ -4,16 +4,16 @@ Scriptname TDL_Teleport extends Quest
 ; TDL_Teleport
 ;
 ; Stages:
-; 90 Ч Random City / Village
-; 91 Ч Random Location + Message + GodBuff (20s)
-; 92 Ч High Hrothgar
-; 93 Ч Whiterun
-; 94 Ч Solitude
-; 95 Ч Windhelm
-; 96 Ч Riften
-; 97 Ч Markarth
-; 98 Ч Falkreath
-; 99 Ч Dawnstar
+; 90 Ц Random City / Village
+; 91 Ц Random Location + Message + GodBuff (20s)
+; 92 Ц High Hrothgar
+; 93 Ц Whiterun
+; 94 Ц Solitude
+; 95 Ц Windhelm
+; 96 Ц Riften
+; 97 Ц Markarth
+; 98 Ц Falkreath
+; 99 Ц Dawnstar
 ; =====================================================
 
 
@@ -40,12 +40,34 @@ ObjectReference Property Marker_Dawnstar Auto
 Spell   Property TDL_GodBuff Auto
 Message Property TDL_Teleport_RandomWarningMsg Auto
 
+; ---------- OPTIONAL: TDL_RespawningEncounterZones integration ----------
+; Ёти свойства Ќ≈ об€зательны. ≈сли они не заполнены (None) Ч код ниже ничего не делает.
+GlobalVariable Property TDL_Respawn_Mode Auto
+GlobalVariable Property TDL_Respawn_iHoursToRespawnCell Auto
+GlobalVariable Property TDL_Respawn_iHoursToRespawnCellCleared Auto
+
 
 ; =====================================================
 ; INTERNAL STATE (safety timer)
 ; =====================================================
 Bool  _safetyActive = false
 Float _safetyEndRT = 0.0
+
+; =====================================================
+; INTERNAL STATE (respawn force window)
+; =====================================================
+Int   _respawnPrevMode = 0
+Float _respawnForceEndGT = 0.0
+
+Int MODE_DEFAULT = 1
+Int MODE_CUSTOM = 2
+Int MODE_FORCE = 3
+
+Int DEFAULT_CELL = 240
+Int DEFAULT_CLEARED = 720
+
+Int FORCE_CELL = 2
+Int FORCE_CLEARED = 3
 
 
 ; =====================================================
@@ -68,6 +90,9 @@ Bool Function RunStage(Int aiStage, Actor playerRef)
 		If !_TeleportRandomFromList(TDL_Teleport_RandomLocations, playerRef)
 			Return False
 		EndIf
+
+		; Force (2h) only if TDL_RespawningEncounterZones is wired via properties
+		_RespawnPatch_BeginTemporaryForce(2.0)
 
 		If TDL_Teleport_RandomWarningMsg
 			TDL_Teleport_RandomWarningMsg.Show()
@@ -151,7 +176,7 @@ Function _ApplySafetyBuff(Actor p, Float duration)
 		Return
 	EndIf
 
-	;  –»“»„Ќќ: каст, а не AddSpell
+	; правильно: Cast, а не AddSpell
 	TDL_GodBuff.Cast(p, p)
 
 	_safetyActive = true
@@ -188,4 +213,103 @@ EndEvent
 Function _ClearSafety()
 	_safetyActive = false
 	_safetyEndRT = 0.0
+EndFunction
+
+
+; =====================================================
+; OPTIONAL: RESPAWN PATCH (Force window 2h, then restore previous mode)
+; Active only if TDL_Respawn_Mode property is filled (not None)
+; =====================================================
+Bool Function _RespawnPatch_IsEnabled()
+	If TDL_Respawn_Mode == None
+		Return False
+	EndIf
+	Return True
+EndFunction
+
+Function _RespawnPatch_BeginTemporaryForce(Float hours)
+	If !_RespawnPatch_IsEnabled()
+		Return
+	EndIf
+	If hours <= 0.0
+		hours = 2.0
+	EndIf
+
+	; если окно ещЄ не активно Ч запоминаем исходный режим
+	If _respawnForceEndGT <= 0.0
+		_respawnPrevMode = TDL_Respawn_Mode.GetValueInt()
+	EndIf
+
+	_respawnForceEndGT = Utility.GetCurrentGameTime() + (hours / 24.0)
+
+	_RespawnPatch_ApplyForce()
+	RegisterForSingleUpdateGameTime(hours)
+EndFunction
+
+Event OnPlayerLoadGame()
+	_RespawnPatch_Tick()
+EndEvent
+
+Event OnUpdateGameTime()
+	_RespawnPatch_Tick()
+EndEvent
+
+Function _RespawnPatch_Tick()
+	If !_RespawnPatch_IsEnabled()
+		Return
+	EndIf
+	If _respawnForceEndGT <= 0.0
+		Return
+	EndIf
+
+	Float now = Utility.GetCurrentGameTime()
+	If now < _respawnForceEndGT
+		Float remainingHours = (_respawnForceEndGT - now) * 24.0
+		If remainingHours < 0.05
+			remainingHours = 0.05
+		EndIf
+		_RespawnPatch_ApplyForce()
+		RegisterForSingleUpdateGameTime(remainingHours)
+		Return
+	EndIf
+
+	_respawnForceEndGT = 0.0
+	If _respawnPrevMode <= 0
+		_respawnPrevMode = MODE_DEFAULT
+	EndIf
+
+	TDL_Respawn_Mode.SetValueInt(_respawnPrevMode)
+	_RespawnPatch_ApplyMode(_respawnPrevMode)
+EndFunction
+
+Function _RespawnPatch_ApplyForce()
+	TDL_Respawn_Mode.SetValueInt(MODE_FORCE)
+	ConsoleUtil.ExecuteCommand("setgs iHoursToRespawnCell " + FORCE_CELL)
+	ConsoleUtil.ExecuteCommand("setgs iHoursToRespawnCellCleared " + FORCE_CLEARED)
+EndFunction
+
+Function _RespawnPatch_ApplyMode(Int mode)
+	If mode == MODE_DEFAULT
+		ConsoleUtil.ExecuteCommand("setgs iHoursToRespawnCell " + DEFAULT_CELL)
+		ConsoleUtil.ExecuteCommand("setgs iHoursToRespawnCellCleared " + DEFAULT_CLEARED)
+		Return
+	EndIf
+
+	If mode == MODE_CUSTOM
+		Int vCell = DEFAULT_CELL
+		Int vCleared = DEFAULT_CLEARED
+
+		If TDL_Respawn_iHoursToRespawnCell
+			vCell = TDL_Respawn_iHoursToRespawnCell.GetValueInt()
+		EndIf
+		If TDL_Respawn_iHoursToRespawnCellCleared
+			vCleared = TDL_Respawn_iHoursToRespawnCellCleared.GetValueInt()
+		EndIf
+
+		ConsoleUtil.ExecuteCommand("setgs iHoursToRespawnCell " + vCell)
+		ConsoleUtil.ExecuteCommand("setgs iHoursToRespawnCellCleared " + vCleared)
+		Return
+	EndIf
+
+	_RespawnPatch_ApplyForce()
 EndFunction
