@@ -41,6 +41,7 @@ Guida rapida (test manuale)
 
 Ping (consigliato come primo test):
   "PERCORSO_DEL_GIOCO\Data\TDL\Tools\tdl_send.exe" NORMAL SYSTEM_PING 2
+  ("PERCORSO_DEL_GIOCO\Data\TDL\Tools\send_raw.cmd" NORMAL SYSTEM_PING 2)
 
 Esempio per installazione Steam standard (sostituisci il percorso con il tuo):
   "F:\SteamLibrary\steamapps\common\Skyrim Special Edition\Data\TDL\Tools\tdl_send.exe" NORMAL SYSTEM_PING 2

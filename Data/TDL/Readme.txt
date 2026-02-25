@@ -41,6 +41,7 @@ Quick start (manual test)
 
 Ping (recommended first):
   "PATH_TO_GAME\Data\TDL\Tools\tdl_send.exe" NORMAL SYSTEM_PING 2
+  ("PATH_TO_GAME\Data\TDL\Tools\send_raw.cmd" NORMAL SYSTEM_PING 2)
 
 Example for the default Steam installation (replace the path with yours):
   "F:\SteamLibrary\steamapps\common\Skyrim Special Edition\Data\TDL\Tools\tdl_send.exe" NORMAL SYSTEM_PING 2

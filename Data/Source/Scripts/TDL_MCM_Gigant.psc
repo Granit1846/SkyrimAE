@@ -132,8 +132,8 @@ Bool Function HandleSliderOpen(SKI_ConfigBase mcm, Int option)
 	EndIf
 
 	If option == OID_SpeedFast || option == OID_SpeedSlow
-		mcm.SetSliderDialogRange(1.0, 500.0)
-		mcm.SetSliderDialogInterval(5.0)
+		mcm.SetSliderDialogRange(50.0, 300.0)
+		mcm.SetSliderDialogInterval(10.0)
 		Return True
 	EndIf
 
@@ -203,9 +203,46 @@ Bool Function HandleOptionDefault(SKI_ConfigBase mcm, Int option)
 		mcm.SetSliderOptionValue(option, 60, "{0}")
 		Return True
 	EndIf
+
 	If option == OID_SpeedDuration
 		Gigant_SpeedDurationGV.SetValue(60)
 		mcm.SetSliderOptionValue(option, 60, "{0}")
+		Return True
+	EndIf
+
+	If option == OID_ScaleBig
+		Gigant_ScaleBigGV.SetValue(2.0)
+		mcm.SetSliderOptionValue(option, 2.0, "{2}")
+		Return True
+	EndIf
+
+	If option == OID_DmgBig
+		Gigant_DamageBigGV.SetValue(5.0)
+		mcm.SetSliderOptionValue(option, 5.0, "{2}")
+		Return True
+	EndIf
+
+	If option == OID_ScaleSmall
+		Gigant_ScaleSmallGV.SetValue(0.33)
+		mcm.SetSliderOptionValue(option, 0.33, "{2}")
+		Return True
+	EndIf
+
+	If option == OID_DmgSmall
+		Gigant_DamageSmallGV.SetValue(0.5)
+		mcm.SetSliderOptionValue(option, 0.5, "{2}")
+		Return True
+	EndIf
+
+	If option == OID_SpeedFast
+		Gigant_SpeedMultGV.SetValue(200.0)
+		mcm.SetSliderOptionValue(option, 200.0, "{0}")
+		Return True
+	EndIf
+
+	If option == OID_SpeedSlow
+		Gigant_SpeedSlowGV.SetValue(50.0)
+		mcm.SetSliderOptionValue(option, 50.0, "{0}")
 		Return True
 	EndIf
 

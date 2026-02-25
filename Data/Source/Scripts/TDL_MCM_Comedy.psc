@@ -17,6 +17,7 @@ GlobalVariable Property ArenaWaves Auto
 GlobalVariable Property ArenaPerWave Auto
 GlobalVariable Property ArenaWaveInterval Auto
 GlobalVariable Property ArenaSpawnRadius Auto
+GlobalVariable Property ArenaTimeoutMinutes Auto ; NEW
 GlobalVariable Property EscortDuration Auto
 
 Int FLAG_HAS_DEFAULT = 16
@@ -41,6 +42,7 @@ Int OID_ArenaWaves = -1
 Int OID_ArenaPerWave = -1
 Int OID_ArenaWaveInterval = -1
 Int OID_ArenaSpawnRadius = -1
+Int OID_ArenaTimeoutMinutes = -1 ; NEW
 Int OID_EscortDuration = -1
 
 Function BuildPage(SKI_ConfigBase mcm)
@@ -59,7 +61,7 @@ Function BuildPage(SKI_ConfigBase mcm)
 	mcm.AddHeaderOption("$ComedyHeaderEscort")
 	OID_Start53 = mcm.AddTextOption("$ComedyEventEscort", "$ActionStart")
 	OID_EscortDuration = mcm.AddSliderOption("$ComedyEscortDuration", EscortDuration.GetValue(), "{0}", FLAG_HAS_DEFAULT)
-	
+
 	mcm.SetCursorPosition(1)
 	mcm.AddHeaderOption("$ComedyHeaderHorror")
 	OID_Start51 = mcm.AddTextOption("$ComedyEventHorror", "$ActionStart")
@@ -75,6 +77,7 @@ Function BuildPage(SKI_ConfigBase mcm)
 	OID_ArenaPerWave = mcm.AddSliderOption("$ComedyArenaPerWave", ArenaPerWave.GetValue(), "{0}", FLAG_HAS_DEFAULT)
 	OID_ArenaWaveInterval = mcm.AddSliderOption("$ComedyArenaInterval", ArenaWaveInterval.GetValue(), "{2}", FLAG_HAS_DEFAULT)
 	OID_ArenaSpawnRadius = mcm.AddSliderOption("$ComedyArenaRadius", ArenaSpawnRadius.GetValue(), "{0}", FLAG_HAS_DEFAULT)
+	OID_ArenaTimeoutMinutes = mcm.AddSliderOption("$ComedyArenaTimeoutMinutes", ArenaTimeoutMinutes.GetValue(), "{1}", FLAG_HAS_DEFAULT) ; NEW
 EndFunction
 
 Bool Function HandleOptionSelect(SKI_ConfigBase mcm, Int option)
@@ -176,6 +179,11 @@ Bool Function HandleSliderAccept(SKI_ConfigBase mcm, Int option, Float value)
 		mcm.SetSliderOptionValue(option, value, "{0}")
 		Return True
 	EndIf
+	If option == OID_ArenaTimeoutMinutes
+		ArenaTimeoutMinutes.SetValue(value)
+		mcm.SetSliderOptionValue(option, value, "{1}")
+		Return True
+	EndIf
 	If option == OID_EscortDuration
 		EscortDuration.SetValue(value)
 		mcm.SetSliderOptionValue(option, value, "{0}")
@@ -258,6 +266,11 @@ Bool Function HandleOptionDefault(SKI_ConfigBase mcm, Int option)
 	If option == OID_ArenaSpawnRadius
 		ArenaSpawnRadius.SetValue(800)
 		mcm.SetSliderOptionValue(option, 800, "{0}")
+		Return True
+	EndIf
+	If option == OID_ArenaTimeoutMinutes
+		ArenaTimeoutMinutes.SetValue(10.0)
+		mcm.SetSliderOptionValue(option, 10.0, "{1}")
 		Return True
 	EndIf
 	If option == OID_EscortDuration
@@ -354,6 +367,12 @@ Bool Function HandleSliderOpen(SKI_ConfigBase mcm, Int option)
 	If option == OID_ArenaSpawnRadius
 		mcm.SetSliderDialogRange(200, 3000)
 		mcm.SetSliderDialogInterval(100)
+		Return True
+	EndIf
+
+	If option == OID_ArenaTimeoutMinutes
+		mcm.SetSliderDialogRange(5.0, 20.0)
+		mcm.SetSliderDialogInterval(0.5)
 		Return True
 	EndIf
 
