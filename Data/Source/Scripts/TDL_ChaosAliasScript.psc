@@ -151,7 +151,11 @@ Function StartLowG(Actor akPlayer)
 	_lowGJumpTarget = _origJump * mult
 	Game.SetGameSettingFloat("fJumpHeightMin", _lowGJumpTarget)
 
-	If NoFallingDamageAbility && !akPlayer.HasSpell(NoFallingDamageAbility)
+	If NoFallingDamageAbility
+		; Re-add on repeat so TDL_SlowFall restarts with a fresh timer instead of expiring mid-jump
+		If akPlayer.HasSpell(NoFallingDamageAbility)
+			akPlayer.RemoveSpell(NoFallingDamageAbility)
+		EndIf
 		akPlayer.AddSpell(NoFallingDamageAbility, false)
 	EndIf
 

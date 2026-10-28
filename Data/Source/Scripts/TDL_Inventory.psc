@@ -312,6 +312,11 @@ Function _FinishDrop(Bool success)
 	_dropActive = false
 
 	If _holderRef
+		; On failure return undropped items instead of deleting them with the holder
+		Actor p = Game.GetPlayer()
+		If !success && p
+			_holderRef.RemoveAllItems(p, true, true)
+		EndIf
 		If _holderRef.IsEnabled()
 			_holderRef.Disable(true)
 		EndIf

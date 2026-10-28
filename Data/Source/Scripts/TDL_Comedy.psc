@@ -441,6 +441,8 @@ Bool Function _StartStage52(Actor p)
 	Float tmin = 0.0
 	If !ArenaTimeoutMinutes
 		_Notify("Stage52 ERROR: ArenaTimeoutMinutes property is None")
+		_stage52Active = false
+		_arenaState = 0
 		Return False
 	EndIf
 	tmin = ArenaTimeoutMinutes.GetValue()
@@ -833,11 +835,14 @@ Function _SuccessStage53()
 		If _escortChest
 			_escortChest.MoveTo(_escortActor)
 			_Notify("Существо благополучно пережило путь. Награда ожидает вас.")
-			_RemoveEscortChestDelayed()
 		EndIf
 	EndIf
 
 	_CleanupStage53_Internal()
+	; Cleanup first: the 30s chest wait below must not leave the stage active (duplicate rewards)
+	If _escortChest
+		_RemoveEscortChestDelayed()
+	EndIf
 EndFunction
 
 Function _RemoveEscortChestDelayed()

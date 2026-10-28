@@ -1,0 +1,3 @@
+[submodule "TDL_StreamPlugin/extern/CommonLibSSE-NG"]
+	path = TDL_StreamPlugin/extern/CommonLibSSE-NG
+	url = https://github.com/alandtse/CommonLibVR.git

@@ -1,30 +1,32 @@
 ﻿cmake_minimum_required(VERSION 3.23)
 
-project(TDL_StreamPlugin VERSION 1.0.0 LANGUAGES CXX)
+project(TDL_StreamPlugin VERSION 1.1.0 LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(CommonLibSSE CONFIG REQUIRED)
+# CommonLibSSE-NG (alandtse) as a submodule: the old vcpkg port (3.7.1) cannot read the Skyrim 1.7.x Address Library
+set(BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(ENABLE_SKYRIM_VR OFF CACHE BOOL "" FORCE)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/extern/CommonLibSSE-NG EXCLUDE_FROM_ALL)
+include(${CMAKE_CURRENT_SOURCE_DIR}/extern/CommonLibSSE-NG/cmake/CommonLibSSE.cmake)  # add_commonlibsse_plugin()
+find_package(nlohmann_json CONFIG REQUIRED)
 
 add_commonlibsse_plugin(${PROJECT_NAME}
     SOURCES
         ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/TDL_PipeServer.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/TDL_MenuHook.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/TDL_Twitch.cpp
 )
 
+target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann_json::nlohmann_json winhttp crypt32 shell32 ole32)
 
-# Принудительно подключаем твой PCH.h ко всем единицам трансляции
+# Force-include PCH.h into every translation unit
 target_compile_options(${PROJECT_NAME} PRIVATE "/FI${CMAKE_CURRENT_SOURCE_DIR}/PCH.h")
-target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
+target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_23)
 
-# Куда копировать DLL после сборки
+# Where to copy the DLL after build (override with -DTDL_GAME_DIR=...)
 set(TDL_GAME_DIR "F:/SteamLibrary/steamapps/common/Skyrim Special Edition" CACHE PATH "Skyrim game root")
-# --- TDL data root inside Skyrim\Data ---
-set(TDL_DATA_DIR "${TDL_GAME_DIR}/Data/TDL" CACHE PATH "TDL root folder under Skyrim Data")
-set(TDL_TOOLS_DIR "${TDL_DATA_DIR}/Tools" CACHE PATH "TDL tools folder")
-set(TDL_CONFIG_DIR "${TDL_DATA_DIR}/Config" CACHE PATH "TDL config folder")
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory
@@ -33,24 +35,3 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         "$<TARGET_FILE:${PROJECT_NAME}>"
         "${TDL_GAME_DIR}/Data/SKSE/Plugins/${PROJECT_NAME}.dll"
 )
-# ---- Silent pipe sender (no console) ----
-add_executable(tdl_send
-    src/tools/tdl_send.cpp
- "src/TDL_MenuHook.h")
-
-target_compile_features(tdl_send PRIVATE cxx_std_20)
-target_compile_definitions(tdl_send PRIVATE UNICODE _UNICODE NOMINMAX)
-
-# Copy to game: Data\TDL_Tools\tdl_send.exe
-add_custom_command(TARGET tdl_send POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory "${TDL_TOOLS_DIR}"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "$<TARGET_FILE:tdl_send>"
-        "${TDL_TOOLS_DIR}/tdl_send.exe"
-)
-# Make tdl_send.exe portable (no VC++ Redist needed)
-if (MSVC)
-  set_property(TARGET tdl_send PROPERTY MSVC_RUNTIME_LIBRARY
-    "MultiThreadedDLL$<$<CONFIG:Debug>:Debug>")
-endif()
-

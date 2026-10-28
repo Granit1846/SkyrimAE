@@ -1,6 +1,6 @@
 ﻿// src/main.cpp
 #include "TDL_PipeServer.h"
-#include "TDL_MenuHook.h" 
+#include "TDL_Twitch.h"
 #include <SKSE/SKSE.h>
 
 #include <spdlog/sinks/basic_file_sink.h>
@@ -32,31 +32,27 @@ SKSEPluginLoad(const SKSE::LoadInterface* skse)
 	SKSE::Init(skse);
 	SetupLog();
 
-	// Устанавливаем хук ДО загрузки данных
-	TDL::InstallStageHook();  // ← добавлено
-
-	if (auto* msg = SKSE::GetMessagingInterface(); msg) {
-		msg->RegisterListener([](SKSE::MessagingInterface::Message* m) {
-			if (m->type == SKSE::MessagingInterface::kDataLoaded) {
-				TDL_StartPipeServer();
-			}
-			});
-	}
-	return true;
-
-	spdlog::info("TDL_StreamPlugin: SKSEPluginLoad OK");
-
 	if (auto* msg = SKSE::GetMessagingInterface(); msg) {
 		msg->RegisterListener([](SKSE::MessagingInterface::Message* m) {
 			if (!m) {
 				return;
 			}
-			if (m->type == SKSE::MessagingInterface::kDataLoaded) {
+			switch (m->type) {
+			case SKSE::MessagingInterface::kDataLoaded:
 				spdlog::info("TDL_StreamPlugin: kDataLoaded -> start pipe server");
 				TDL_StartPipeServer();
+				TDL_StartTwitch();
+				break;
+			case SKSE::MessagingInterface::kPostLoadGame:
+			case SKSE::MessagingInterface::kNewGame:
+				TDL_ReloadGameplayConfig();
+				break;
+			default:
+				break;
 			}
-			});
+		});
 	}
 
+	spdlog::info("TDL_StreamPlugin: SKSEPluginLoad OK");
 	return true;
 }
