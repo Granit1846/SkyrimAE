@@ -104,7 +104,8 @@ Local control without Twitch (advanced)
 ---------------------------------------
 The plugin also listens on the named pipe \\.\pipe\TDL_Stream for lines like
   SYSTEM_PING|2     FORCE|SUMMON_SKELETON|3     FORCE1|SYSTEM_HEALING
-Data\TDL\tools\send_raw.cmd / send_raw.ps1 send such a line with PowerShell.
+Helper scripts send_raw.cmd / send_raw.ps1 (PowerShell) are in the GitHub repository
+(Data/TDL/tools); they are not needed to play.
 SOURCE: 1 = bits, 2 = points/chat, 3 = poll.
 
 

@@ -103,7 +103,8 @@ Contrôle local sans Twitch (avancé)
 -----------------------------------
 Le plugin écoute également sur le canal nommé (named pipe) \\.\pipe\TDL_Stream pour des lignes comme
   SYSTEM_PING|2     FORCE|SUMMON_SKELETON|3     FORCE1|SYSTEM_HEALING
-Data\TDL\tools\send_raw.cmd / send_raw.ps1 envoient une telle ligne via PowerShell.
+Les scripts send_raw.cmd / send_raw.ps1 (PowerShell) se trouvent dans le dépôt GitHub
+(Data/TDL/tools) ; ils ne sont pas nécessaires pour jouer.
 SOURCE: 1 = bits, 2 = points/chat, 3 = poll.
 
 

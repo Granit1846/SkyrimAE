@@ -105,7 +105,8 @@ FORCE1|ACTION - одно действие сразу: SYSTEM_HEALING, WRATH_11/1
 ---------------------------------------
 Плагин также принимает строки через именованный канал \\.\pipe\TDL_Stream, например:
   SYSTEM_PING|2     FORCE|SUMMON_SKELETON|3     FORCE1|SYSTEM_HEALING
-Data\TDL\tools\send_raw.cmd / send_raw.ps1 отправляют такую строку через PowerShell.
+Скрипты send_raw.cmd / send_raw.ps1 (PowerShell) для этого лежат в репозитории на GitHub
+(Data/TDL/tools); для игры они не нужны.
 SOURCE: 1 = биты, 2 = баллы/чат, 3 = голосование.
 
 
