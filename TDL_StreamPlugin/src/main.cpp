@@ -1,5 +1,6 @@
 ﻿// src/main.cpp
 #include "TDL_PipeServer.h"
+#include "TDL_Overlay.h"
 #include "TDL_Twitch.h"
 #include <SKSE/SKSE.h>
 
@@ -42,6 +43,7 @@ SKSEPluginLoad(const SKSE::LoadInterface* skse)
 				spdlog::info("TDL_StreamPlugin: kDataLoaded -> start pipe server");
 				TDL_StartPipeServer();
 				TDL_StartTwitch();
+				TDL_StartOverlay();
 				break;
 			case SKSE::MessagingInterface::kPostLoadGame:
 			case SKSE::MessagingInterface::kNewGame:

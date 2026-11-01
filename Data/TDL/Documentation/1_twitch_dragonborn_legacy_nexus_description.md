@@ -10,6 +10,7 @@
 > - Stages overview: `7_twitch_dragonborn_legacy_description_mods_and_stges.md`  
 > - Changelog & roadmap: `8_twitch_dragonborn_legacy_changelog_roadmap.md`  
 
+> - Stream features (1.2): `9_twitch_dragonborn_legacy_stream_features.md`  
 TDL turns your Twitch viewers into the gods (and demons) of your Skyrim run. Channel point rewards, bits,
 chat commands and polls trigger scenarios in the game: divine wrath, summoned monsters and dragons, a hunter
 on your trail, horror chases, arenas, curses, teleports, weather and size changes.
@@ -57,6 +58,7 @@ The plugin is open source (GPL-3.0): https://github.com/Granit1846/SkyrimAE
 > - Описание стадий: `7_twitch_dragonborn_legacy_description_mods_and_stges.md`  
 > - Changelog и roadmap: `8_twitch_dragonborn_legacy_changelog_roadmap.md`  
 
+> - Стрим-функции (1.2): `9_twitch_dragonborn_legacy_stream_features.md`  
 TDL превращает зрителей вашего Twitch в богов (и демонов) вашего прохождения Skyrim. Награды за баллы канала,
 биты, команды чата и голосования запускают сценарии в игре: божественную кару, призыв чудовищ и драконов,
 охотника по вашему следу, хоррор-погони, арены, проклятия, телепорты, смену погоды и размеров.

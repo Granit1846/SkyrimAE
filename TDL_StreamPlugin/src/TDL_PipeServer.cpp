@@ -1,5 +1,6 @@
 ﻿// src/TDL_PipeServer.cpp
 #include "TDL_PipeServer.h"
+#include "TDL_Twitch.h"
 
 #include <SKSE/SKSE.h>
 #include <SKSE/API.h>
@@ -22,6 +23,7 @@
 #undef max
 #endif
 
+#include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
 
 #include <fstream>
@@ -29,6 +31,7 @@
 #include <unordered_map>
 
 
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
@@ -492,7 +495,8 @@ static constexpr IniToGlobalMap kGameplayIniMap[] = {
 		int group = GROUP_NONE;
 		double cooldownSec = 0.0;
 		std::uint64_t seq = 0;
-		std::string notice;  // shown in-game when dispatched (e.g. "viewer: reward"), empty = silent
+		TDL_Origin origin;
+		bool forceSingle = false;
 	};
 
 	struct ForceBurstItem
@@ -501,7 +505,7 @@ static constexpr IniToGlobalMap kGameplayIniMap[] = {
 		int count = 1;
 		double intervalSec = kForceDefaultIntervalSec;
 		std::uint64_t seq = 0;
-		std::string notice;
+		TDL_Origin origin;
 	};
 
 	struct Command
@@ -516,11 +520,53 @@ static constexpr IniToGlobalMap kGameplayIniMap[] = {
 	static std::mutex g_mtx;
 	static std::condition_variable g_cv;
 	static std::deque<Command> g_cmds;
+	static bool g_twitchPaused = false;
+	static bool g_twitchPauseHold = false;
 	static std::atomic_uint64_t g_seq{ 0 };  // ParseLineToCommand runs on the pipe and Twitch threads
 
 	// Normal scheduling state
 	static Clock::time_point g_groupReady[GROUP_MAX + 1]{};
 	static Clock::time_point g_globalReady{};
+
+	// Overlay / Twitch feedback (guarded by g_mtx)
+	struct RecentItem
+	{
+		std::string text;
+		Clock::time_point at;
+		uint64_t id;
+	};
+	static std::deque<RecentItem> g_recent;
+	static uint64_t g_recentId = 0;
+	static std::atomic<TDL_OutcomeHook> g_outcomeHook{ nullptr };
+
+	static void RememberRecent(const std::string& notice)
+	{
+		if (notice.empty()) {
+			return;
+		}
+		std::lock_guard lk(g_mtx);
+		g_recent.push_front({ notice, Clock::now(), ++g_recentId });
+		if (g_recent.size() > 8) {
+			g_recent.pop_back();
+		}
+	}
+
+	static void ReportOutcome(const TDL_Origin& origin, bool fired)
+	{
+		if (auto hook = g_outcomeHook.load(); hook) {
+			hook(origin, fired);
+		}
+	}
+
+	// Seconds until a group may fire again (cooldown and the global gap), 0 if ready.
+	static double SecondsUntilReady(int group, Clock::time_point now)
+	{
+		auto at = g_groupReady[group];
+		if (g_globalReady > at) {
+			at = g_globalReady;
+		}
+		return at > now ? std::chrono::duration<double>(at - now).count() : 0.0;
+	}
 
 	static int ClampSource(int s)
 	{
@@ -601,7 +647,7 @@ static constexpr IniToGlobalMap kGameplayIniMap[] = {
 	// FORCE1 allow-list (single)
 	static bool IsForceSingleAllowed(const std::string& a)
 	{
-		return (a == "SYSTEM_HEALING" || a == "WRATH_11" || a == "WRATH_12" || a == "WRATH_13");
+		return (a == "SYSTEM_HEALING" || a == "SYSTEM_BLESSING" || a == "WRATH_11" || a == "WRATH_12" || a == "WRATH_13");
 	}
 
 	// Direct call instead of a ModEvent: RegisterForModEvent (done in OnInit) is not persisted in saves,
@@ -634,10 +680,22 @@ static constexpr IniToGlobalMap kGameplayIniMap[] = {
 		}
 	}
 
-	static void DispatchAction(std::string action, int source, std::string notice = {})
+	// Skyrim shows Papyrus strings in the system ANSI code page (the mod's .psc files are cp1251); notices are UTF-8.
+	static std::string ToGameText(const std::string& utf8)
+	{
+		const int wn = MultiByteToWideChar(CP_UTF8, 0, utf8.data(), static_cast<int>(utf8.size()), nullptr, 0);
+		std::wstring w(static_cast<size_t>(wn), L'\0');
+		MultiByteToWideChar(CP_UTF8, 0, utf8.data(), static_cast<int>(utf8.size()), w.data(), wn);
+		const int n = WideCharToMultiByte(CP_ACP, 0, w.data(), wn, nullptr, 0, nullptr, nullptr);
+		std::string out(static_cast<size_t>(n), '\0');
+		WideCharToMultiByte(CP_ACP, 0, w.data(), wn, out.data(), n, nullptr, nullptr);
+		return out;  // shortcut: chars outside the ANSI code page (emoji) become '?'
+	}
+
+	static void DispatchAction(std::string action, int source, const std::string& noticeUtf8 = {})
 	{
 		if (auto* tasks = SKSE::GetTaskInterface(); tasks) {
-			tasks->AddTask([a = std::move(action), s = source, n = std::move(notice)]() mutable {
+			tasks->AddTask([a = std::move(action), s = source, n = ToGameText(noticeUtf8)]() mutable {
 				if (!n.empty()) {
 					ShowNotification_OnGameThread(std::move(n));
 				}
@@ -802,11 +860,17 @@ static constexpr IniToGlobalMap kGameplayIniMap[] = {
 	// - groups VIRUS/COMEDY/INVENTORY: up to 8 pending Normal items per group
 	// If the group is full, we replace the "worst" queued item in that group ONLY if the new item has higher priority.
 	// Priority: source 1 (beats) > 2 (points) > 3 (vote).
-	static void EnqueueNormalOrReplaceByGroup(NormalItem&& item)
+	static TDL_SubmitInfo EnqueueNormalOrReplaceByGroup(NormalItem&& item)
 	{
+		TDL_SubmitInfo info{};
+		std::optional<TDL_Origin> evicted;
+		{
 		std::lock_guard lk(g_mtx);
 
 		const std::size_t cap = GetNormalQueueCapForGroup(item.group);
+		const int group = item.group;
+		const int source = item.source;
+		const std::uint64_t seq = item.seq;
 
 		std::size_t count = 0;
 		std::size_t worstIdx = static_cast<std::size_t>(-1);
@@ -836,37 +900,60 @@ static constexpr IniToGlobalMap kGameplayIniMap[] = {
 			if (worstIdx != static_cast<std::size_t>(-1) && item.source < worstSource) {
 				spdlog::info("Queue: REPLACE (cap {}) group={} '{}' src={} (was '{}' src={})",
 					cap, item.group, item.action, item.source, g_cmds[worstIdx].normal.action, g_cmds[worstIdx].normal.source);
+				evicted = std::move(g_cmds[worstIdx].normal.origin);
 				g_cmds[worstIdx].normal = std::move(item);
+				info.accepted = true;
 				g_cv.notify_one();
 			}
 			else {
 				spdlog::info("Queue: DROP (cap {}) group={} '{}' src={}", cap, item.group, item.action, item.source);
 			}
-			return;
+		}
+		else {
+			Command cmd{};
+			cmd.type = CmdType::kNormal;
+			cmd.normal = std::move(item);
+			g_cmds.push_back(std::move(cmd));
+			spdlog::info("Queue: PUSH group={} '{}' src={} ({} / {})",
+				g_cmds.back().normal.group, g_cmds.back().normal.action, g_cmds.back().normal.source, (count + 1), cap);
+			info.accepted = true;
+			g_cv.notify_one();
 		}
 
-		Command cmd{};
-		cmd.type = CmdType::kNormal;
-		cmd.normal = std::move(item);
-		g_cmds.push_back(std::move(cmd));
-		spdlog::info("Queue: PUSH group={} '{}' src={} ({} / {})",
-			g_cmds.back().normal.group, g_cmds.back().normal.action, g_cmds.back().normal.source, (count + 1), cap);
-		g_cv.notify_one();
+		if (info.accepted) {
+			// Rough ETA from the queue as it is now: group cooldown + same-group items that fire first (source, seq)
+			double eta = SecondsUntilReady(group, Clock::now());
+			int ahead = 0;
+			for (const auto& c : g_cmds) {
+				if (c.type == CmdType::kNormal && c.normal.group == group &&
+					(c.normal.source < source || (c.normal.source == source && c.normal.seq < seq))) {
+					eta += c.normal.cooldownSec;
+					++ahead;
+				}
+			}
+			info.position = ahead + 1;
+			info.etaSec = static_cast<int>(eta + 0.5);
+		}
+		}
+		if (evicted) {
+			ReportOutcome(*evicted, false);  // outside the lock: the hook may do slow work
+		}
+		return info;
 	}
 
-	static void EnqueueCommand(Command&& cmd)
+	static TDL_SubmitInfo EnqueueCommand(Command&& cmd)
 	{
 		if (cmd.type == CmdType::kNormal) {
-			EnqueueNormalOrReplaceByGroup(std::move(cmd.normal));
-			return;
+			return EnqueueNormalOrReplaceByGroup(std::move(cmd.normal));
 		}
 
-		// ForceBurst: push as a command, does not replace normal-by-group
+		// ForceBurst: push as a command, does not replace normal-by-group; bursts go first
 		{
 			std::lock_guard lk(g_mtx);
 			g_cmds.push_back(std::move(cmd));
 		}
 		g_cv.notify_one();
+		return { true, 1, 0 };
 	}
 
 	static void SchedulerThreadProc()
@@ -876,12 +963,11 @@ static constexpr IniToGlobalMap kGameplayIniMap[] = {
 		while (g_running.load()) {
 			Command next{};
 			bool have = false;
+			(void)TDL_IsTwitchPaused();  // reload config before taking the queue lock
 
 			{
 				std::unique_lock lk(g_mtx);
-				g_cv.wait_for(lk, std::chrono::milliseconds(200), [] {
-					return !g_running.load() || !g_cmds.empty();
-					});
+				if (g_cmds.empty()) g_cv.wait_for(lk, std::chrono::milliseconds(200));
 
 				if (!g_running.load()) {
 					break;
@@ -891,10 +977,11 @@ static constexpr IniToGlobalMap kGameplayIniMap[] = {
 				}
 
 				const auto now = Clock::now();
+				const bool hold = g_twitchPaused && g_twitchPauseHold;
 
 				// 1) FORCE burst: takes precedence, runs as one block
 				for (size_t i = 0; i < g_cmds.size(); i++) {
-					if (g_cmds[i].type == CmdType::kForceBurst) {
+					if (g_cmds[i].type == CmdType::kForceBurst && !(hold && g_cmds[i].burst.origin.twitch)) {
 						next = std::move(g_cmds[i]);
 						g_cmds.erase(g_cmds.begin() + static_cast<std::ptrdiff_t>(i));
 						have = true;
@@ -914,6 +1001,7 @@ static constexpr IniToGlobalMap kGameplayIniMap[] = {
 						if (c.type != CmdType::kNormal) {
 							continue;
 						}
+						if (hold && c.normal.origin.twitch) continue;
 
 						auto canAt = g_groupReady[c.normal.group];
 						if (canAt.time_since_epoch().count() == 0) {
@@ -939,7 +1027,8 @@ static constexpr IniToGlobalMap kGameplayIniMap[] = {
 
 					if (bestIdx == static_cast<size_t>(-1)) {
 						// Wait until the earliest cooldown expires OR a new command arrives (notify_one).
-						g_cv.wait_until(lk, wakeAt);
+						if (hold) g_cv.wait_for(lk, std::chrono::milliseconds(200));
+						else g_cv.wait_until(lk, wakeAt);
 						continue;
 					}
 
@@ -947,10 +1036,6 @@ static constexpr IniToGlobalMap kGameplayIniMap[] = {
 					g_cmds.erase(g_cmds.begin() + static_cast<std::ptrdiff_t>(bestIdx));
 					have = true;
 
-					// Reserve cooldown for chosen normal action
-					const auto now2 = Clock::now();
-					g_groupReady[next.normal.group] = now2 + std::chrono::milliseconds(static_cast<int>(next.normal.cooldownSec * 1000.0));
-					g_globalReady = now2 + globalMinGap;
 				}
 			}
 
@@ -958,10 +1043,32 @@ static constexpr IniToGlobalMap kGameplayIniMap[] = {
 				continue;
 			}
 
+			const auto& origin = next.type == CmdType::kNormal ? next.normal.origin : next.burst.origin;
+
 			if (next.type == CmdType::kNormal) {
-				spdlog::info("Dispatch: group={} '{}' src={} cd={}s",
-					next.normal.group, next.normal.action, next.normal.source, next.normal.cooldownSec);
-				DispatchAction(std::move(next.normal.action), next.normal.source, std::move(next.normal.notice));
+				bool held = false;
+				bool canceled = false;
+				{
+					std::lock_guard lk(g_mtx);
+					// ASVS 15.4.2: pause decision and dispatch handoff share the queue lock.
+					if (origin.twitch && g_twitchPaused) {
+						if (g_twitchPauseHold) { g_cmds.push_front(std::move(next)); held = true; }
+						else canceled = true;
+					} else {
+						if (!next.normal.forceSingle) {
+							const auto now2 = Clock::now();
+							g_groupReady[next.normal.group] = now2 + std::chrono::milliseconds(static_cast<int>(next.normal.cooldownSec * 1000.0));
+							g_globalReady = now2 + globalMinGap;
+						}
+						spdlog::info("Dispatch: group={} '{}' src={} cd={}s",
+							next.normal.group, next.normal.action, next.normal.source, next.normal.cooldownSec);
+						DispatchAction(std::move(next.normal.action), next.normal.forceSingle ? 1 : next.normal.source, origin.notice);
+					}
+				}
+				if (!held) {
+					if (!canceled) RememberRecent(origin.notice.empty() ? origin.trigger : origin.notice);
+					ReportOutcome(origin, !canceled);
+				}
 				continue;
 			}
 
@@ -969,14 +1076,38 @@ static constexpr IniToGlobalMap kGameplayIniMap[] = {
 			spdlog::warn("FORCE burst start: '{}' x{} interval={}s",
 				next.burst.action, next.burst.count, next.burst.intervalSec);
 
-			for (int i = 0; i < next.burst.count && g_running.load(); i++) {
-				DispatchAction(next.burst.action, 1, i == 0 ? next.burst.notice : std::string{});
+			bool heldBurst = false;
+			int dispatched = 0;
+			for (int i = 0; i < next.burst.count; i++) {
+				{
+					std::lock_guard lk(g_mtx);
+					if (!g_running.load()) break;
+					if (origin.twitch && g_twitchPaused) {
+						if (g_twitchPauseHold) {
+							// ASVS 2.3.1: keep remaining steps and their slot queued.
+							next.burst.count -= i;
+							if (i) next.burst.origin.notice.clear();
+							heldBurst = true;
+							g_cmds.push_front(std::move(next));
+						}
+						break;
+					}
+					DispatchAction(next.burst.action, 1, i == 0 ? origin.notice : std::string{});
+					++dispatched;
+				}
 				if (i + 1 < next.burst.count) {
-					std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(next.burst.intervalSec * 1000.0)));
+					std::unique_lock lk(g_mtx);
+					g_cv.wait_for(lk, std::chrono::milliseconds(static_cast<int>(next.burst.intervalSec * 1000.0)), [&] {
+						return !g_running.load() || (origin.twitch && g_twitchPaused);
+					});
 				}
 			}
 
-			spdlog::warn("FORCE burst done: '{}'", next.burst.action);
+			if (!heldBurst) {
+				if (dispatched == next.burst.count) RememberRecent(origin.notice.empty() ? origin.trigger : origin.notice);
+				ReportOutcome(origin, dispatched == next.burst.count);
+				spdlog::warn("FORCE burst done: '{}'", next.burst.action);
+			}
 		}
 	}
 
@@ -1097,12 +1228,43 @@ void TDL_StopPipeServer()
 	UnblockConnect();
 
 
+	std::vector<TDL_Origin> canceled;
 	{
 		std::lock_guard lk(g_mtx);
+		for (const auto& cmd : g_cmds) {
+			canceled.push_back(cmd.type == CmdType::kNormal ? cmd.normal.origin : cmd.burst.origin);
+		}
 		g_cmds.clear();
 	}
+	for (const auto& origin : canceled) ReportOutcome(origin, false);
 
 	spdlog::info("Pipe/Scheduler stopped");
+}
+
+void TDL_WakeScheduler()
+{
+	g_cv.notify_all();
+}
+
+void TDL_SetTwitchPauseState(bool paused, bool hold)
+{
+	std::vector<TDL_Origin> canceled;
+	{
+		std::lock_guard lk(g_mtx);
+		if (g_twitchPaused && g_twitchPauseHold && !hold) {
+			for (auto it = g_cmds.begin(); it != g_cmds.end();) {
+				const auto& origin = it->type == CmdType::kNormal ? it->normal.origin : it->burst.origin;
+				if (origin.twitch) {
+					canceled.push_back(origin);
+					it = g_cmds.erase(it);
+				} else ++it;
+			}
+		}
+		g_twitchPaused = paused;
+		g_twitchPauseHold = hold;
+	}
+	for (const auto& origin : canceled) ReportOutcome(origin, false);
+	g_cv.notify_all();
 }
 
 void TDL_ReloadGameplayConfig()
@@ -1110,16 +1272,114 @@ void TDL_ReloadGameplayConfig()
 	QueueReloadGameplayConfig();
 }
 
-void TDL_SubmitLine(const std::string& line, const std::string& notice)
+TDL_SubmitInfo TDL_SubmitLine(const std::string& line, const TDL_Origin& origin)
 {
+	// FORCE1 fires at once inside the parser (no queue), so report it as fired here, not as rejected
+	if (line.rfind("FORCE1|", 0) == 0) {
+		const auto action = line.substr(7);
+		if (!IsForceSingleAllowed(action)) {
+			return {};
+		}
+		(void)TDL_IsTwitchPaused();  // reload config before the queue gate
+		{
+			std::lock_guard lk(g_mtx);
+			// ASVS 15.4.2: FORCE1 uses the same pause gate as scheduled actions.
+			if (origin.twitch && g_twitchPaused) {
+				if (!g_twitchPauseHold) return {};
+				Command cmd{};
+				cmd.normal.action = action;
+				cmd.normal.source = 1;
+				cmd.normal.group = GetGroupForAction(action);
+				cmd.normal.seq = ++g_seq;
+				cmd.normal.origin = origin;
+				cmd.normal.forceSingle = true;
+				g_cmds.push_back(std::move(cmd));
+				g_cv.notify_one();
+				return { true, 1, 0 };
+			}
+			spdlog::info("FORCE1 dispatch: '{}'", action);
+			DispatchAction(action, 1, origin.notice);
+		}
+		RememberRecent(origin.notice.empty() ? origin.trigger : origin.notice);
+		ReportOutcome(origin, true);
+		return { true, 1, 0 };
+	}
+
 	auto cmd = ParseLineToCommand(line);
 	if (!cmd) {
-		return;
+		return {};
 	}
-	cmd->normal.notice = notice;
-	cmd->burst.notice = notice;
+	cmd->normal.origin = origin;
+	cmd->burst.origin = origin;
 	spdlog::info("Submit: '{}'", line);
-	EnqueueCommand(std::move(*cmd));
+	return EnqueueCommand(std::move(*cmd));
+}
+
+void TDL_SetOutcomeHook(TDL_OutcomeHook hook)
+{
+	g_outcomeHook = hook;
+}
+
+void TDL_Notify(const std::string& text)
+{
+	if (auto* tasks = SKSE::GetTaskInterface(); tasks) {
+		tasks->AddTask([message = ToGameText(text)] { ShowNotification_OnGameThread(message); });
+	}
+}
+
+std::string TDL_GetStateJson()
+{
+	const bool paused = TDL_IsTwitchPaused();
+	struct Row
+	{
+		const NormalItem* item;
+		double eta;
+	};
+
+	nlohmann::json state;
+	std::lock_guard lk(g_mtx);
+	const auto now = Clock::now();
+
+	// Firing order within a group is by (source, seq); groups run in parallel, so sort all rows by ETA.
+	std::vector<const NormalItem*> items;
+	nlohmann::json queue = nlohmann::json::array();
+	for (const auto& c : g_cmds) {
+		if (c.type == CmdType::kForceBurst) {
+			queue.push_back({ { "who", c.burst.origin.who }, { "trigger", c.burst.origin.trigger }, { "eta", 0 } });
+		} else {
+			items.push_back(&c.normal);
+		}
+	}
+	std::sort(items.begin(), items.end(), [](auto* a, auto* b) {
+		return a->source != b->source ? a->source < b->source : a->seq < b->seq;
+	});
+	std::vector<Row> rows;
+	double groupEta[GROUP_MAX + 1]{};
+	for (int g = 0; g <= GROUP_MAX; ++g) {
+		groupEta[g] = SecondsUntilReady(g, now);
+	}
+	for (auto* it : items) {
+		rows.push_back({ it, groupEta[it->group] });
+		groupEta[it->group] += it->cooldownSec;
+	}
+	std::stable_sort(rows.begin(), rows.end(), [](const Row& a, const Row& b) { return a.eta < b.eta; });
+	for (const auto& r : rows) {
+		queue.push_back({ { "who", r.item->origin.who }, { "trigger", r.item->origin.trigger.empty() ? r.item->action : r.item->origin.trigger },
+			{ "eta", static_cast<int>(r.eta + 0.5) } });
+	}
+
+	nlohmann::json recent = nlohmann::json::array();
+	state.update(nlohmann::json::parse(TDL_GetTwitchStateJson()));
+	const int recentMinutes = state.value("recentMinutes", 10);
+	for (const auto& r : g_recent) {
+		if (recentMinutes > 0 && now - r.at > std::chrono::minutes(recentMinutes)) continue;
+		recent.push_back({ { "text", r.text }, { "ago", static_cast<int>(std::chrono::duration<double>(now - r.at).count()) }, { "id", r.id } });
+	}
+
+	state["paused"] = paused;
+	state["queue"] = std::move(queue);
+	state["recent"] = std::move(recent);
+	return state.dump(-1, ' ', false, nlohmann::json::error_handler_t::replace);
 }
 
 TDL_IniData TDL_LoadIni(const std::filesystem::path& iniPath)

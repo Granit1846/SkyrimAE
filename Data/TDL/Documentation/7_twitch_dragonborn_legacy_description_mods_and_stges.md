@@ -11,6 +11,7 @@
 > - Stages overview: `7_twitch_dragonborn_legacy_description_mods_and_stges.md`  
 > - Changelog & roadmap: `8_twitch_dragonborn_legacy_changelog_roadmap.md` 
 
+> - Stream features (1.2): `9_twitch_dragonborn_legacy_stream_features.md`  
 This document describes TDL stages/scenarios and their intent.  
 Installation and requirements: `2_twitch_dragonborn_legacy_installation_and_requirements.md`.
 
@@ -226,6 +227,7 @@ That’s part of the integration philosophy.
 > - Описание стадий: `7_twitch_dragonborn_legacy_description_mods_and_stges.md`  
 > - Changelog и roadmap: `8_twitch_dragonborn_legacy_changelog_roadmap.md`  
 
+> - Стрим-функции (1.2): `9_twitch_dragonborn_legacy_stream_features.md`  
 Этот документ описывает стадии/сценарии и их назначение.  
 Установка и требования — в `2_twitch_dragonborn_legacy_installation_and_requirements.md`.
 

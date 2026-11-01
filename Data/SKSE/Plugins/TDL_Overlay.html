@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>TDL Overlay</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 12px;
+      background: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Cinzel", "Georgia", sans-serif;
+      color: #e6e6e6;
+      font-size: 13px;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95), 0 0 2px rgba(0, 0, 0, 0.9);
+      user-select: none;
+      overflow: hidden;
+    }
+    #panel {
+      width: 100%;
+      max-width: 420px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .card {
+      background: rgba(10, 10, 14, 0.72);
+      border: 1px solid rgba(216, 180, 106, 0.2);
+      border-radius: 8px;
+      padding: 8px 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    }
+    .header {
+      color: #d8b46a;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+      padding-bottom: 3px;
+      border-bottom: 1px solid rgba(216, 180, 106, 0.2);
+    }
+    .badge-paused {
+      background: rgba(216, 180, 106, 0.2);
+      border: 1px solid #d8b46a;
+      color: #d8b46a;
+      font-weight: 600;
+      font-size: 12px;
+      text-align: center;
+      padding: 6px 10px;
+      border-radius: 6px;
+    }
+    #sec-now {
+      border: 1px solid #d8b46a;
+      animation: appear 0.4s ease-out;
+    }
+    @keyframes appear {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .now-item {
+      font-size: 14px;
+      font-weight: 500;
+      color: #ffffff;
+      line-height: 1.35;
+      word-break: break-word;
+    }
+    .list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .row-text {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .who {
+      color: #d8b46a;
+      font-weight: 600;
+    }
+    .eta, .ago {
+      font-size: 11px;
+      color: #a8a8aa;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .more {
+      text-align: right;
+      color: #d8b46a;
+      font-size: 11px;
+      margin-top: 4px;
+    }
+    .offline {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #888888;
+      font-size: 11px;
+      padding: 2px 4px;
+    }
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #888888;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+  <div id="panel">
+    <div id="badge-paused" class="badge-paused" style="display:none">PAUSED</div>
+    <section id="sec-now" class="card" style="display:none">
+      <div class="header">Сейчас</div>
+      <div id="now-content" class="now-item"></div>
+    </section>
+    <section id="sec-queue" class="card" style="display:none">
+      <div class="header">Очередь</div>
+      <ul id="queue-list" class="list"></ul>
+      <div id="queue-more" class="more" style="display:none"></div>
+    </section>
+    <section id="sec-recent" class="card" style="display:none">
+      <div class="header">Недавно</div>
+      <ul id="recent-list" class="list"></ul>
+    </section>
+    <section id="sec-vote" class="card" style="display:none">
+      <div class="header">Голосование <span id="vote-time"></span></div>
+      <ul id="vote-list" class="list"></ul>
+    </section>
+    <section id="sec-top" class="card" style="display:none">
+      <div class="header">Top viewers</div>
+      <ul id="top-list" class="list"></ul>
+    </section>
+    <div id="offline" class="offline" style="display:none">
+      <span class="dot"></span><span>нет связи с игрой</span>
+    </div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const scale = params.get('scale');
+    if (scale) document.body.style.zoom = scale;
+
+    function el(tag, cls, text) {
+      const e = document.createElement(tag);
+      if (cls) e.className = cls;
+      if (text !== undefined) e.textContent = text;
+      return e;
+    }
+
+    function fmtAgo(sec) {
+      const s = Math.max(0, Math.floor(sec || 0));
+      return s < 60 ? s + ' с назад' : Math.floor(s / 60) + ' мин назад';
+    }
+
+    let lastNewestKey = null;
+    let nowExpiry = 0;
+    let nowText = '';
+    let lastSuccess = Date.now();
+    let newestRecentId = null;
+    let lastSoundAt = 0;
+    let audioContext;
+
+    function playCue(data) {
+      const volume = Math.max(0, Math.min(1, Number(data.soundVolume ?? 60) / 100));
+      if (!volume) return;
+      const file = data.soundFile || '';
+      if (/^[A-Za-z0-9_.-]+\.(mp3|wav|ogg)$/.test(file)) {
+        const sound = new Audio(SERVED ? '/sound' : file);
+        sound.volume = volume;
+        sound.play().catch(() => {});
+        return;
+      }
+      try {
+        audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
+        audioContext.resume();
+        const start = audioContext.currentTime;
+        for (const [offset, frequency] of [[0, 660], [0.11, 880]]) {
+          const oscillator = audioContext.createOscillator();
+          const gain = audioContext.createGain();
+          oscillator.type = 'sine';
+          oscillator.frequency.value = frequency;
+          gain.gain.setValueAtTime(0.0001, start + offset);
+          gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, volume * 0.2), start + offset + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, start + offset + 0.22);
+          oscillator.connect(gain).connect(audioContext.destination);
+          oscillator.start(start + offset);
+          oscillator.stop(start + offset + 0.23);
+        }
+      } catch (_) {}
+    }
+
+    function updateSound(data) {
+      const id = data.recent && data.recent.length ? data.recent[0].id : null;
+      if (newestRecentId === null) { newestRecentId = id ?? 0; return; }
+      if (id === null || id <= newestRecentId) return;
+      newestRecentId = id;
+      const now = Date.now();
+      if (data.sound && now - lastSoundAt >= 1000) {
+        lastSoundAt = now;
+        playCue(data);
+      }
+    }
+
+    function updateNow(recent) {
+      if (recent && recent.length > 0) {
+        const top = recent[0];
+        const key = top.text || '';
+        if (key && key !== lastNewestKey) {
+          lastNewestKey = key;
+          const passed = typeof top.ago === 'number' ? top.ago : 0;
+          if (passed < 6) {
+            nowExpiry = Date.now() + (6 - passed) * 1000;
+            nowText = key;
+          }
+        }
+      }
+      const secNow = document.getElementById('sec-now');
+      if (Date.now() < nowExpiry && nowText) {
+        if (secNow.style.display === 'none') {
+          secNow.style.display = 'block';
+          secNow.style.animation = 'none';
+          secNow.offsetHeight;
+          secNow.style.animation = '';
+        }
+        document.getElementById('now-content').textContent = nowText;
+      } else {
+        secNow.style.display = 'none';
+      }
+    }
+
+    function updateQueue(queue) {
+      const sec = document.getElementById('sec-queue');
+      const list = document.getElementById('queue-list');
+      const more = document.getElementById('queue-more');
+      list.replaceChildren();
+      if (!queue || queue.length === 0) {
+        sec.style.display = 'none';
+        return;
+      }
+      sec.style.display = 'block';
+      const visible = queue.slice(0, 6);
+      for (const item of visible) {
+        const li = el('li', 'row');
+        const main = el('div', 'row-text');
+        if (item.who) {
+          main.append(el('span', 'who', item.who));
+          if (item.trigger) main.append(document.createTextNode(': '));
+        }
+        if (item.trigger || item.text) {
+          main.append(document.createTextNode(item.trigger || item.text));
+        }
+        const etaVal = typeof item.eta === 'number' ? Math.round(item.eta) : 0;
+        const eta = el('div', 'eta', '~' + etaVal + ' с');
+        li.append(main, eta);
+        list.append(li);
+      }
+      if (queue.length > 6) {
+        more.textContent = '+' + (queue.length - 6) + ' ещё';
+        more.style.display = 'block';
+      } else {
+        more.style.display = 'none';
+      }
+    }
+
+    function updateRecent(recent, show) {
+      const sec = document.getElementById('sec-recent');
+      if (!show || !recent || recent.length === 0) {
+        sec.style.display = 'none';
+        return;
+      }
+      sec.style.display = 'block';
+      const list = document.getElementById('recent-list');
+      list.replaceChildren();
+      for (const item of recent.slice(0, 8)) {
+        const li = el('li', 'row');
+        const text = el('div', 'row-text', item.text || '');
+        const ago = el('div', 'ago', fmtAgo(item.ago));
+        li.append(text, ago);
+        list.append(li);
+      }
+    }
+
+    function updateTop(top, show) {
+      const sec = document.getElementById('sec-top');
+      sec.style.display = show && top && top.length ? 'block' : 'none';
+      if (sec.style.display === 'none') return;
+      const list = document.getElementById('top-list');
+      list.replaceChildren();
+      for (const item of top.slice(0, 5)) {
+        const row = el('li', 'row');
+        row.append(el('span', 'who', item.name || ''), el('span', 'eta', String(item.actions || 0)));
+        list.append(row);
+      }
+    }
+
+    function updateVote(vote) {
+      const sec = document.getElementById('sec-vote');
+      sec.style.display = vote && vote.options && vote.options.length ? 'block' : 'none';
+      if (sec.style.display === 'none') return;
+      document.getElementById('vote-time').textContent = '· ' + Math.max(0, vote.secondsLeft || 0) + ' с';
+      const list = document.getElementById('vote-list');
+      list.replaceChildren();
+      vote.options.forEach((item, index) => {
+        const row = el('li', 'row');
+        row.append(el('span', 'row-text', '!' + (index + 1) + ' ' + (item.label || '')),
+          el('span', 'eta', String(item.votes || 0)));
+        list.append(row);
+      });
+    }
+
+    // Opened as an OBS "Local file" (served by OBS as http://absolute/... or file://) the page loads even before
+    // the game starts and keeps polling the plugin; only when the plugin itself serves the page are paths relative.
+    const SERVED = location.hostname === '127.0.0.1' || location.hostname === 'localhost';
+    const STATE_URL = SERVED
+      ? '/state'
+      : 'http://127.0.0.1:' + (new URLSearchParams(location.search).get('port') || '8645') + '/state';
+
+    async function poll() {
+      try {
+        const res = await fetch(STATE_URL, { cache: 'no-store' });
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        lastSuccess = Date.now();
+        document.getElementById('offline').style.display = 'none';
+        document.getElementById('badge-paused').style.display = data.paused ? 'block' : 'none';
+        updateNow(data.recent);
+        updateQueue(data.queue);
+        updateRecent(data.recent, data.showRecent);
+        updateSound(data);
+        updateTop(data.top, data.showTop);
+        updateVote(data.vote);
+      } catch (err) {
+        if (Date.now() - lastSuccess >= 5000) {
+          document.getElementById('offline').style.display = 'inline-flex';
+        }
+        updateNow();
+      }
+    }
+
+    poll();
+    setInterval(poll, 1000);
+  </script>
+</body>
+</html>
