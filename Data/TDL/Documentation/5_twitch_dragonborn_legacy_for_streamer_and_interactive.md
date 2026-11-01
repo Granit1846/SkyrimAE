@@ -7,90 +7,58 @@
 > - FAQ & known issues: `3_twitch_dragonborn_legacy_faq_and_known_issues.md`  
 > - What this mod does NOT do: `4_twitch_dragonborn_legacy_what_this_mod_does_not_do.md`  
 > - Streamers & interactive control: `5_twitch_dragonborn_legacy_for_streamer_and_interactive.md`  
-> - Streamer.bot setup: `6_twitch_dragonborn_legacy_setting_in_streamer.bot.md`  
+> - Twitch connection & TDL_Twitch.ini: `6_twitch_dragonborn_legacy_twitch_setup.md`  
 > - Stages overview: `7_twitch_dragonborn_legacy_description_mods_and_stges.md`  
-> - Changelog & roadmap: `8_twitch_dragonborn_legacy_changelog_roadmap.md` 
-
-This document is about streaming scenarios and external control.  
-For installation and requirements, use: `2_twitch_dragonborn_legacy_installation_and_requirements.md`.
+> - Changelog & roadmap: `8_twitch_dragonborn_legacy_changelog_roadmap.md`  
 
 ---
 
-## Why TDL works well on streams
+## How viewers interact
 
-TDL was designed so that events can be triggered **deliberately and controllably**, not only by random chance.
+| Twitch | Priority | Who | Needs |
+|---|---|---|---|
+| Bits (cheer) | highest | anyone | Affiliate/Partner |
+| Channel point rewards | normal | anyone | Affiliate/Partner |
+| Chat commands (`!tdl_heal`) | normal | broadcaster + mods (or everyone) | any account |
+| Polls (winning choice) | lowest | the chat as a whole | any account |
 
-- each event is a separate command/stage
-- no mandatory sequence
-- you can change intensity and disable categories
-- well suited for challenge runs and interactive control
-- can be controlled manually or via a chat-bot (the bot must be able to run an external application by trigger, e.g., Streamer.bot)
-
----
-
-## External control (mandatory)
-
-TDL relies on external integration via tools that must remain here:
-
-- `Data\TDL\tools\` (including `tdl_send.exe`)
-
-Without this folder the mod **will not work**.
+Every event is mapped to an action (or a random action from a tier) in `TDL_Twitch.ini` -
+see `6_twitch_dragonborn_legacy_twitch_setup.md`. In the game a message shows who did it.
 
 ---
 
-## Typical interaction patterns
+## Suggested setup for a stream
 
-- viewers trigger a specific scenario (via Bits/Channel Points/Polls/Donations — depending on your setup)
-- moderators switch “modes” (e.g., softer/harder presets)
-- automation by time/donation/keyword (through your streaming tooling)
-
----
-
-## Trigger examples (Streamer.bot)
-
-If you want automatic triggers, you can bind events to Actions, for example:
-- Channel Points → Twitch → Channel Reward → Redeemed (SOURCE=2)
-- Bits → Twitch → Cheer (SOURCE=1)
-- Votes → Twitch → Polls → Poll Ended/Completed (SOURCE=3)
-
-For donations, manual execution via a command trigger (or a “force” trigger) is recommended unless your donation integration is fully under control.
+1. Create four channel point rewards with the titles from `[Rewards]`
+   (`TDL: Лёгкое испытание` ... `TDL: Эпическое испытание`) or rename them in the INI to your own titles.
+   Turn on "Skip reward requests queue" if you do not want to approve them manually.
+2. Keep the default bits tiers (100 / 500 / 1000 / 2500) or change the thresholds.
+3. Use chat commands for yourself and your moderators: healing, weather/size reset, test ping.
+4. Polls: name the choices like the `[Poll]` keys (e.g. Дракон / Охотник / Арена) - the winner is triggered when the poll ends.
 
 ---
 
-## If the bot is not configured (manual fallback)
+## Queue, cooldowns, safety
 
-If your chat-bot is not configured, you can still trigger commands manually by running:
-
-`<Game>\Data\TDL\tools\tdl_send.exe`  
-Example:
-`<Game>\Data\TDL\tools\tdl_send.exe normal system_ping 2`
-
-All available commands can be found in `README.txt` (TDL folder).
-
----
-
-## Creating new commands / actions / queues (Streamer.bot)
-
-- To create new triggers, open **Commands** and add a trigger based on your needs (or copy an existing one).
-- To create new commands, open **Actions** (you can duplicate an existing action and modify it).
-- Important: for proper queue behavior, open **Queues**, create a new queue, and then assign that queue to the relevant Actions.
-
-When creating new commands, note that they should start with `normal` or `force` (see `README.txt` in the TDL folder).
+- Each group (summon, weather, teleport, show...) fires one action, then waits for its cooldown;
+  the rest of the group waits in the queue (15 per group, 8 for virus/show/inventory).
+- Higher priority (bits) goes first; when a group queue is full, a higher-priority action replaces the lowest one.
+- Cooldowns: `Data\TDL\config\TDL_Cooldowns.ini` (read at game start).
+- Werewolf, vampire lord and "drop all items" are hard to undo - keep them for epic tiers or leave them out.
+- FORCE bursts ignore cooldowns and can overload the engine (FPS drops, crashes). Use them yourself, not from chat.
 
 ---
 
-## Stream UX recommendations
+## Stream UX tips
 
-- start with low intensity
-- enable categories gradually
-- do not overload queues: keep each group queue under ~15 concurrent launches
-- you can manually adjust cooldowns if needed (they exist to prevent broken logic from repeated spawns):
-  - `<Game>\Data\TDL\config\TDL_Cooldowns.ini`
+- Start with light tiers and open heavier ones as the stream warms up.
+- Put the action names in your reward descriptions so viewers know what they buy.
+- The in-game message line is visible on stream - translate `[Messages]` into your stream language.
 
 ---
 
 # Русская версия
-## Для стримеров и интерактивных сценариев
+## Для стримеров и интерактива
 
 > **Навигация по документам**  
 > - Описание для Nexus: `1_twitch_dragonborn_legacy_nexus_description.md`  
@@ -98,52 +66,50 @@ When creating new commands, note that they should start with `normal` or `force`
 > - FAQ и известные проблемы: `3_twitch_dragonborn_legacy_faq_and_known_issues.md`  
 > - Чего мод НЕ делает: `4_twitch_dragonborn_legacy_what_this_mod_does_not_do.md`  
 > - Для стримеров и интерактива: `5_twitch_dragonborn_legacy_for_streamer_and_interactive.md`  
-> - Настройка Streamer.bot: `6_twitch_dragonborn_legacy_setting_in_streamer.bot.md`  
+> - Подключение Twitch и TDL_Twitch.ini: `6_twitch_dragonborn_legacy_twitch_setup.md`  
 > - Описание стадий: `7_twitch_dragonborn_legacy_description_mods_and_stges.md`  
 > - Changelog и roadmap: `8_twitch_dragonborn_legacy_changelog_roadmap.md`  
 
-Этот документ — про стрим-сценарии и внешнее управление.  
-Инструкции по установке и требованиям — в `2_twitch_dragonborn_legacy_installation_and_requirements.md`.
+---
+
+## Как зрители влияют на игру
+
+| Twitch | Приоритет | Кто | Нужно |
+|---|---|---|---|
+| Биты (cheer) | самый высокий | любой | компаньон/партнёр |
+| Награды за баллы канала | обычный | любой | компаньон/партнёр |
+| Команды чата (`!tdl_heal`) | обычный | стример + модераторы (или все) | любой аккаунт |
+| Голосования (победивший вариант) | самый низкий | весь чат | любой аккаунт |
+
+Каждое событие привязывается к действию (или к случайному действию из уровня) в `TDL_Twitch.ini` -
+см. `6_twitch_dragonborn_legacy_twitch_setup.md`. В игре появляется сообщение, кто это сделал.
 
 ---
 
-## Почему TDL подходит для стримов
+## Рекомендуемая настройка стрима
 
-TDL проектировался так, чтобы события можно было запускать **осознанно и управляемо**, а не только “рандомом”.
-
-- каждое событие — отдельная команда/стадия
-- нет обязательной последовательности
-- можно менять интенсивность и отключать категории
-- удобно для челлендж-ранов и интерактива
-- управляется вручную или с помощью чат-бота (чат-бот должен уметь запускать стороннее приложение по триггеру, например Streamer.bot)
-
----
-
-## Внешнее управление (обязательно)
-
-TDL использует внешнюю интеграцию через инструменты, которые должны находиться здесь:
-
-- `Data\TDL\tools\` (включая `tdl_send.exe`)
-
-Без этой папки мод **не работает**.
+1. Создайте четыре награды за баллы с названиями из `[Rewards]`
+   (`TDL: Лёгкое испытание` ... `TDL: Эпическое испытание`) или впишите в INI свои названия.
+   Включите «Пропускать очередь запросов», если не хотите подтверждать награды вручную.
+2. Оставьте пороги битов по умолчанию (100 / 500 / 1000 / 2500) или поменяйте их.
+3. Команды чата - для вас и модераторов: лечение, сброс погоды/размера, проверка связи.
+4. Голосования: назовите варианты как ключи `[Poll]` (например, Дракон / Охотник / Арена) - победитель срабатывает по окончании.
 
 ---
 
-## Типовые сценарии интерактива
+## Очередь, кулдауны, безопасность
 
-- зритель выбирает сценарий (покупка за Bits, покупка за баллы канала, голосование или донаты)
-- запускается стадия:
-  - если чат-бот настроен правильно, он сам реагирует на триггер и запускает команду
-  - если чат-бот настроен не полностью, стример или модератор запускает триггер вручную (например: `!test`)
-  - если чат-бот не настроен, запуск возможен только вручную: **Win+R** →
-    `"<Game>\Data\TDL\tools\tdl_send.exe" normal system_ping 2`
-- все команды для запуска можно найти в файле `README.txt` (папка TDL)
+- Каждая группа (призыв, погода, телепорт, шоу...) выполняет одно действие и ждёт кулдаун;
+  остальные действия группы стоят в очереди (15 на группу, 8 для вируса/шоу/инвентаря).
+- Более высокий приоритет (биты) идёт первым; если очередь группы полна, он вытесняет самое низкоприоритетное действие.
+- Кулдауны: `Data\TDL\config\TDL_Cooldowns.ini` (читается при запуске игры).
+- Оборотень, лорд-вампир и «потеря всего инвентаря» плохо отменяются - держите их для эпических уровней или уберите.
+- Серии FORCE не учитывают кулдауны и могут перегрузить движок (просадки FPS, вылеты). Запускайте их сами, не из чата.
 
 ---
 
-## Рекомендации по UX стрима
+## Советы по стриму
 
-- начните с низкой интенсивности
-- включайте категории постепенно (очередь на каждую группу — не больше 15 запусков одновременно)
-- при необходимости вы можете вручную изменить интервалы запуска стадий (ограничения выставлены специально, чтобы не сломать логику игры при многократном спавне):
-  - файл находится по пути: `<Game>\Data\TDL\config\TDL_Cooldowns.ini`
+- Начинайте с лёгких уровней и открывайте тяжёлые по ходу стрима.
+- Пишите в описании награды, что она делает, чтобы зрители знали, за что платят.
+- Строка сообщений в игре видна на стриме - переведите `[Messages]` на язык вашего стрима.

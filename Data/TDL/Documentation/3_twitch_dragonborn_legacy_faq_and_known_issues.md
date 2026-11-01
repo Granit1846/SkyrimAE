@@ -7,47 +7,52 @@
 > - FAQ & known issues: `3_twitch_dragonborn_legacy_faq_and_known_issues.md`  
 > - What this mod does NOT do: `4_twitch_dragonborn_legacy_what_this_mod_does_not_do.md`  
 > - Streamers & interactive control: `5_twitch_dragonborn_legacy_for_streamer_and_interactive.md`  
-> - Streamer.bot setup: `6_twitch_dragonborn_legacy_setting_in_streamer.bot.md`  
+> - Twitch connection & TDL_Twitch.ini: `6_twitch_dragonborn_legacy_twitch_setup.md`  
 > - Stages overview: `7_twitch_dragonborn_legacy_description_mods_and_stges.md`  
-> - Changelog & roadmap: `8_twitch_dragonborn_legacy_changelog_roadmap.md` 
-
-This file focuses on questions and troubleshooting.  
-For installation steps, use: `2_twitch_dragonborn_legacy_installation_and_requirements.md`.
+> - Changelog & roadmap: `8_twitch_dragonborn_legacy_changelog_roadmap.md`  
 
 ---
 
 ## FAQ
 
-### Does the mod work without the tools folder?
-No. The folder **must** exist at: `Data\TDL\tools\` (including `tdl_send.exe`).  
-If it is missing, moved, renamed, or quarantined — TDL will not work.
+### Do I still need Streamer.bot or tdl_send.exe?
+No. Since 1.1 the SKSE plugin talks to Twitch directly. Remove old TDL actions from Streamer.bot so commands are not sent twice.
 
-### Why is there an .exe inside the mod?
-TDL provides external integration via an included helper tool (`tdl_send.exe`).  
-Some antivirus products may flag any unsigned executable. If it is blocked/quarantined, restore it and add an exclusion.
+### Do I need Twitch Affiliate/Partner?
+Only for channel points and bits - Twitch does not offer them to other channels. Chat commands and polls work on any account.
 
-### Do I need SkyUI?
-SkyUI is recommended for MCM settings. Without it, configuration is limited.
+### Who can use chat commands?
+The broadcaster and moderators. Set `ChatAllowEveryone=1` in `TDL_Twitch.ini` to open them to everyone.
+
+### How do I log out / switch accounts?
+Delete `Documents\My Games\Skyrim Special Edition\SKSE\TDL_Twitch.token` and restart the game.
+
+### Is my Twitch password stored?
+No. You log in on twitch.tv; the mod only keeps a refresh token, encrypted with Windows DPAPI for your Windows user.
 
 ### Do I need a new game?
-No, a new game is not required.
+No. Updating from 1.0.x keeps saves working.
 
 ---
 
 ## Known issues / troubleshooting
 
-### The mod “does nothing”
-1. Verify the SKSE plugin is installed:
-   - `Data\SKSE\Plugins\TDL_StreamPlugin.dll`
-2. Verify tools exist:
-   - `Data\TDL\tools\tdl_send.exe`
-3. If antivirus quarantined the tool, restore it and add an exclusion.
+### "failed to open address library file" on start
+Address Library does not match your game version (e.g. after a Skyrim update). Install the Address Library file for your version.
 
-### MCM is missing
-Install SkyUI and ensure it loads correctly.
+### A plugin "must be recompiled for new address library" (ConsoleUtilSSE)
+An old ConsoleUtilSSE build. Install ConsoleUtilSSE NG with support for your game version.
 
-### Antivirus / antimalware blocks the tool
-Add an exclusion for the mod folder and restore the file. Do not rename it and do not move it.
+### Commands from chat do nothing
+1. Check the log `TDL_StreamPlugin.log`: "Twitch: logged in as ..." and "4 of 4 subscriptions active".
+2. A line "Twitch: !cmd by ... -> ACTION" means the command arrived; "no mapping" means the command/reward title is not in the INI.
+3. Remember the cooldowns: a group waits before the next action ("Queue: PUSH ...").
+
+### The login code window appeared but I closed it
+Restart the game - a new code is shown. The code is valid for 30 minutes.
+
+### Low gravity: the character hangs in the air
+Fixed in 1.1.7 (a short "nudge" when the player stalls mid-air during the low-gravity effect).
 
 ---
 
@@ -60,44 +65,49 @@ Add an exclusion for the mod folder and restore the file. Do not rename it and d
 > - FAQ и известные проблемы: `3_twitch_dragonborn_legacy_faq_and_known_issues.md`  
 > - Чего мод НЕ делает: `4_twitch_dragonborn_legacy_what_this_mod_does_not_do.md`  
 > - Для стримеров и интерактива: `5_twitch_dragonborn_legacy_for_streamer_and_interactive.md`  
-> - Настройка Streamer.bot: `6_twitch_dragonborn_legacy_setting_in_streamer.bot.md`  
+> - Подключение Twitch и TDL_Twitch.ini: `6_twitch_dragonborn_legacy_twitch_setup.md`  
 > - Описание стадий: `7_twitch_dragonborn_legacy_description_mods_and_stges.md`  
-> - Changelog и roadmap: `8_twitch_dragonborn_legacy_changelog_roadmap.md`   
-
-Этот файл — про вопросы и устранение неполадок.  
-Инструкции по установке и требованиям: `2_twitch_dragonborn_legacy_installation_and_requirements.md`.
+> - Changelog и roadmap: `8_twitch_dragonborn_legacy_changelog_roadmap.md`  
 
 ---
 
 ## FAQ
 
-### Работает ли мод без папки tools?
-Нет. Папка **обязана** существовать по пути: `Data\TDL\tools\` (включая `tdl_send.exe`).  
-Если папка отсутствует, перенесена, переименована или файл был удалён антивирусом — TDL работать не будет.
+### Нужны ли ещё Streamer.bot или tdl_send.exe?
+Нет. С 1.1 SKSE-плагин сам работает с Twitch. Уберите старые действия TDL из Streamer.bot, чтобы команды не приходили дважды.
 
-### Почему в составе мода есть .exe?
-TDL использует внешний инструмент (`tdl_send.exe`) для интеграции и внешнего взаимодействия.  
-Некоторые антивирусы могут реагировать на неподписанные exe. Если файл заблокирован/удалён — восстановите его и добавьте исключение.
+### Нужен ли статус компаньона/партнёра Twitch?
+Только для баллов канала и битов - другим каналам Twitch их не даёт. Команды чата и голосования работают на любом аккаунте.
 
-### Нужен ли SkyUI?
-SkyUI рекомендуется для настройки через MCM. Без SkyUI возможности настройки будут ограничены.
+### Кто может использовать команды чата?
+Стример и модераторы. `ChatAllowEveryone=1` в `TDL_Twitch.ini` открывает их всем.
+
+### Как выйти / сменить аккаунт?
+Удалите `Документы\My Games\Skyrim Special Edition\SKSE\TDL_Twitch.token` и перезапустите игру.
+
+### Хранится ли мой пароль Twitch?
+Нет. Вход выполняется на twitch.tv; мод хранит только токен обновления, зашифрованный Windows DPAPI для вашего пользователя.
 
 ### Нужна ли новая игра?
-Нет, начинать новую игру не требуется.
+Нет. При обновлении с 1.0.x сохранения работают.
 
 ---
 
-## Известные проблемы / устранение неполадок
+## Известные проблемы / решение
 
-### “Ничего не происходит”
-1. Проверьте наличие SKSE-плагина:
-   - `Data\SKSE\Plugins\TDL_StreamPlugin.dll`
-2. Проверьте наличие tools:
-   - `Data\TDL\tools\tdl_send.exe`
-3. Если антивирус удалил/карантинировал файл — восстановите его и добавьте исключение.
+### «failed to open address library file» при запуске
+Address Library не подходит к версии игры (например, после обновления Skyrim). Установите файл Address Library под вашу версию.
 
-### Нет MCM
-Установите SkyUI и убедитесь, что он загружается корректно.
+### Плагин «must be recompiled for new address library» (ConsoleUtilSSE)
+Старая сборка ConsoleUtilSSE. Установите ConsoleUtilSSE NG с поддержкой вашей версии игры.
 
-### Антивирус блокирует tool
-Добавьте исключение для папки мода и восстановите файл. Не переименовывайте и не переносите его.
+### Команды из чата ничего не делают
+1. Проверьте журнал `TDL_StreamPlugin.log`: «Twitch: logged in as ...» и «4 of 4 subscriptions active».
+2. Строка «Twitch: !cmd by ... -> ACTION» значит, что команда дошла; «no mapping» - команды/названия награды нет в INI.
+3. Помните о кулдаунах: группа ждёт перед следующим действием («Queue: PUSH ...»).
+
+### Появилось окно с кодом, но я его закрыл
+Перезапустите игру - будет новый код. Код действует 30 минут.
+
+### Низкая гравитация: персонаж зависает в воздухе
+Исправлено в 1.1.7 (короткий «толчок», когда персонаж застывает в воздухе во время эффекта).

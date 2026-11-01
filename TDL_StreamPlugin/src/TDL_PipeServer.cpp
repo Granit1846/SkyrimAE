@@ -8,6 +8,10 @@
 
 #include <RE/T/TESDataHandler.h>
 #include <RE/T/TESGlobal.h>
+#include <RE/T/TESQuest.h>
+#include <RE/V/VirtualMachine.h>
+#include <RE/F/FunctionArguments.h>
+#include <RE/P/PackUnpack.h>
 
 #include <Windows.h>
 
@@ -488,6 +492,7 @@ static constexpr IniToGlobalMap kGameplayIniMap[] = {
 		int group = GROUP_NONE;
 		double cooldownSec = 0.0;
 		std::uint64_t seq = 0;
+		std::string notice;  // shown in-game when dispatched (e.g. "viewer: reward"), empty = silent
 	};
 
 	struct ForceBurstItem
@@ -496,6 +501,7 @@ static constexpr IniToGlobalMap kGameplayIniMap[] = {
 		int count = 1;
 		double intervalSec = kForceDefaultIntervalSec;
 		std::uint64_t seq = 0;
+		std::string notice;
 	};
 
 	struct Command
@@ -506,13 +512,11 @@ static constexpr IniToGlobalMap kGameplayIniMap[] = {
 	};
 
 	static std::atomic_bool g_running{ false };
-	static std::thread g_pipeThread;
-	static std::thread g_schedThread;
 
 	static std::mutex g_mtx;
 	static std::condition_variable g_cv;
 	static std::deque<Command> g_cmds;
-	static std::uint64_t g_seq = 0;
+	static std::atomic_uint64_t g_seq{ 0 };  // ParseLineToCommand runs on the pipe and Twitch threads
 
 	// Normal scheduling state
 	static Clock::time_point g_groupReady[GROUP_MAX + 1]{};
@@ -600,27 +604,43 @@ static constexpr IniToGlobalMap kGameplayIniMap[] = {
 		return (a == "SYSTEM_HEALING" || a == "WRATH_11" || a == "WRATH_12" || a == "WRATH_13");
 	}
 
+	// Direct call instead of a ModEvent: RegisterForModEvent (done in OnInit) is not persisted in saves,
+	// so after loading a game the mod event reached no listener.
+	static constexpr std::uint32_t kStreamControllerQuestID = 0x0A07CE;  // TDL_StreamController quest
+
 	static void SendTDLSubmitAction_OnGameThread(std::string actionID, int sourceType)
 	{
-		auto* src = SKSE::GetModCallbackEventSource();
-		if (!src) {
-			spdlog::warn("ModCallbackEventSource not available");
+		auto* quest = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESQuest>(kStreamControllerQuestID, "TwitchDragonbornLegacy.esp");
+		auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
+		if (!quest || !vm) {
+			spdlog::warn("TDL_StreamController quest or Papyrus VM not available");
 			return;
 		}
 
-		SKSE::ModCallbackEvent ev{};
-		ev.eventName = "TDL_SubmitAction";
-		ev.strArg = actionID.c_str();
-		ev.numArg = static_cast<float>(sourceType);
-		ev.sender = nullptr;
-
-		src->SendEvent(&ev);
+		const auto handle = vm->GetObjectHandlePolicy()->GetHandleForObject(quest->GetFormType(), quest);
+		RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> callback;
+		auto* args = RE::MakeFunctionArguments(std::move(actionID), static_cast<std::int32_t>(sourceType));
+		if (!vm->DispatchMethodCall(handle, "TDL_StreamController", "SubmitAction", args, callback)) {
+			spdlog::warn("Papyrus call TDL_StreamController.SubmitAction failed");
+		}
 	}
 
-	static void DispatchAction(std::string action, int source)
+	// Papyrus Debug.Notification: no extra Address Library IDs needed, same path as SubmitAction
+	static void ShowNotification_OnGameThread(std::string text)
+	{
+		if (auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton(); vm) {
+			RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> callback;
+			vm->DispatchStaticCall("Debug", "Notification", RE::MakeFunctionArguments(std::move(text)), callback);
+		}
+	}
+
+	static void DispatchAction(std::string action, int source, std::string notice = {})
 	{
 		if (auto* tasks = SKSE::GetTaskInterface(); tasks) {
-			tasks->AddTask([a = std::move(action), s = source]() mutable {
+			tasks->AddTask([a = std::move(action), s = source, n = std::move(notice)]() mutable {
+				if (!n.empty()) {
+					ShowNotification_OnGameThread(std::move(n));
+				}
 				SendTDLSubmitAction_OnGameThread(std::move(a), s);
 				});
 		}
@@ -941,7 +961,7 @@ static constexpr IniToGlobalMap kGameplayIniMap[] = {
 			if (next.type == CmdType::kNormal) {
 				spdlog::info("Dispatch: group={} '{}' src={} cd={}s",
 					next.normal.group, next.normal.action, next.normal.source, next.normal.cooldownSec);
-				DispatchAction(std::move(next.normal.action), next.normal.source);
+				DispatchAction(std::move(next.normal.action), next.normal.source, std::move(next.normal.notice));
 				continue;
 			}
 
@@ -950,7 +970,7 @@ static constexpr IniToGlobalMap kGameplayIniMap[] = {
 				next.burst.action, next.burst.count, next.burst.intervalSec);
 
 			for (int i = 0; i < next.burst.count && g_running.load(); i++) {
-				DispatchAction(next.burst.action, 1);
+				DispatchAction(next.burst.action, 1, i == 0 ? next.burst.notice : std::string{});
 				if (i + 1 < next.burst.count) {
 					std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(next.burst.intervalSec * 1000.0)));
 				}
@@ -1060,8 +1080,9 @@ void TDL_StartPipeServer()
 
 	spdlog::info("Starting Pipe/Scheduler...");
 
-	g_schedThread = std::thread(SchedulerThreadProc);
-	g_pipeThread = std::thread(PipeThreadProc);
+	// Detached: no shutdown hook exists, and a joinable static std::thread calls std::terminate at process exit
+	std::thread(SchedulerThreadProc).detach();
+	std::thread(PipeThreadProc).detach();
 
 	spdlog::info("Pipe/Scheduler started");
 }
@@ -1075,12 +1096,6 @@ void TDL_StopPipeServer()
 	g_cv.notify_all();
 	UnblockConnect();
 
-	if (g_pipeThread.joinable()) {
-		g_pipeThread.join();
-	}
-	if (g_schedThread.joinable()) {
-		g_schedThread.join();
-	}
 
 	{
 		std::lock_guard lk(g_mtx);
@@ -1088,4 +1103,26 @@ void TDL_StopPipeServer()
 	}
 
 	spdlog::info("Pipe/Scheduler stopped");
+}
+
+void TDL_ReloadGameplayConfig()
+{
+	QueueReloadGameplayConfig();
+}
+
+void TDL_SubmitLine(const std::string& line, const std::string& notice)
+{
+	auto cmd = ParseLineToCommand(line);
+	if (!cmd) {
+		return;
+	}
+	cmd->normal.notice = notice;
+	cmd->burst.notice = notice;
+	spdlog::info("Submit: '{}'", line);
+	EnqueueCommand(std::move(*cmd));
+}
+
+TDL_IniData TDL_LoadIni(const std::filesystem::path& iniPath)
+{
+	return LoadIniKeyValues(iniPath);
 }

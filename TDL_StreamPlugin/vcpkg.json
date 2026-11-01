@@ -1,8 +1,15 @@
-﻿{
-    "name":  "tdl-stream-plugin",
-    "version-string":  "1.0.0",
-    "dependencies":  [
-                         "commonlibsse-ng"
-                     ],
-    "builtin-baseline":  "af752f21c9d79ba3df9cb0250ce2233933f58486"
+{
+    "name": "tdl-stream-plugin",
+    "version-string": "1.1.0",
+    "dependencies": [
+        "directxmath",
+        "directxtk",
+        "fmt",
+        "nlohmann-json",
+        "rapidcsv",
+        "simpleini",
+        "spdlog",
+        "toml11",
+        "xbyak"
+    ]
 }

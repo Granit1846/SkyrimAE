@@ -112,6 +112,13 @@ Event OnPageReset(String page)
 EndEvent
 
 Event OnOptionSelect(Int option)
+	; Route by page: option IDs repeat across pages, so the module chain below can steal Teleport clicks
+	If CurrentPage == "$TDL_PageTeleport"
+		If TeleportModule
+			TeleportModule.HandleOptionSelect(Self, option)
+		EndIf
+		Return
+	EndIf
     If ChaosModule && ChaosModule.HandleOptionSelect(Self, option)
         Return
     EndIf
@@ -142,6 +149,13 @@ Event OnOptionSelect(Int option)
 EndEvent
 
 Event OnOptionSliderAccept(Int option, Float value)
+	; Route by page: option IDs repeat across pages, so the module chain below can steal Teleport clicks
+	If CurrentPage == "$TDL_PageTeleport"
+		If TeleportModule
+			TeleportModule.HandleSliderAccept(Self, option, value)
+		EndIf
+		Return
+	EndIf
     If ChaosModule && ChaosModule.HandleSliderAccept(Self, option, value)
         Return
     EndIf
@@ -166,6 +180,13 @@ Event OnOptionSliderAccept(Int option, Float value)
 EndEvent
 
 Event OnOptionSliderOpen(Int option)
+	; Route by page: option IDs repeat across pages, so the module chain below can steal Teleport clicks
+	If CurrentPage == "$TDL_PageTeleport"
+		If TeleportModule
+			TeleportModule.HandleSliderOpen(Self, option)
+		EndIf
+		Return
+	EndIf
     If ChaosModule && ChaosModule.HandleSliderOpen(Self, option)
         Return
     EndIf
@@ -190,6 +211,13 @@ Event OnOptionSliderOpen(Int option)
 EndEvent
 
 Event OnOptionDefault(Int option)
+	; Route by page: option IDs repeat across pages, so the module chain below can steal Teleport clicks
+	If CurrentPage == "$TDL_PageTeleport"
+		If TeleportModule
+			TeleportModule.HandleOptionDefault(Self, option)
+		EndIf
+		Return
+	EndIf
     If ChaosModule && ChaosModule.HandleOptionDefault(Self, option)
         Return
     EndIf

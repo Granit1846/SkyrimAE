@@ -7,7 +7,7 @@
 > - FAQ & known issues: `3_twitch_dragonborn_legacy_faq_and_known_issues.md`  
 > - What this mod does NOT do: `4_twitch_dragonborn_legacy_what_this_mod_does_not_do.md`  
 > - Streamers & interactive control: `5_twitch_dragonborn_legacy_for_streamer_and_interactive.md`  
-> - Streamer.bot setup: `6_twitch_dragonborn_legacy_setting_in_streamer.bot.md`  
+> - Twitch connection & TDL_Twitch.ini: `6_twitch_dragonborn_legacy_twitch_setup.md`  
 > - Stages overview: `7_twitch_dragonborn_legacy_description_mods_and_stges.md`  
 > - Changelog & roadmap: `8_twitch_dragonborn_legacy_changelog_roadmap.md`   
 
@@ -21,6 +21,34 @@ TDL evolves gradually and deliberately: the priorities are stability, controllab
 ---
 
 ## Current version
+
+### Version 1.1.7 — Native Twitch
+
+**Twitch without Streamer.bot**
+- The SKSE plugin connects to Twitch itself (EventSub): channel point rewards, bits, chat commands, polls
+- One-time login with a code (twitch.tv/activate), token stored encrypted (Windows DPAPI)
+- All mappings in `Data\SKSE\Plugins\TDL_Twitch.ini`; comma-separated lists pick a random action (difficulty tiers)
+- In-game messages "who did what", fully configurable (`[Messages]`)
+- `tdl_send.exe` removed: the mod ships no executables anymore
+
+**Game version**
+- Skyrim 1.7.104 support (plugin rebuilt on CommonLibSSE-NG; the plugin is now GPL-3.0, source on GitHub)
+
+**Respawn module built in**
+- `TDL_RespawningEncounterZones.esp` / `Tdl_patch1.esp` are no longer needed
+- Settings on the MCM Teleport page (game default / custom hours / always fast)
+- Fast-respawn window after random dangerous teleports and after fast travel
+
+**Fixes**
+- Stage fragments restored: actions triggered from outside could do nothing (broken quest fragment script)
+- Actions were lost after loading a save (event registration not kept in saves)
+- Repeated low gravity no longer ends slow fall early; no more hanging mid-air without moving
+- Gigant: the second active effect is reset correctly
+- Inventory "drop all": items are returned on timeout instead of being lost
+- Arena could stay locked forever; escort could give duplicate rewards
+- MCM Teleport page buttons did nothing
+- INI settings are re-applied after loading a save
+- Missing MCM strings in all 9 languages (About page, arena time limit, respawn options)
 
 ### Version 1.0 — Initial Release
 
@@ -107,17 +135,17 @@ Ideas and suggestions are welcome if they:
 ## Changelog и Roadmap
 
 > **Навигация по документам**  
-> - Описание для Nexus: `twitch_dragonborn_legacy_nexus_description.md`  
-> - Установка и требования: `twitch_dragonborn_legacy_installation_and_requirements.md`  
-> - FAQ и известные проблемы: `twitch_dragonborn_legacy_faq_and_known_issues.md`  
-> - Чего мод НЕ делает: `twitch_dragonborn_legacy_what_this_mod_does_not_do.md`  
-> - Для стримеров и интерактива: `twitch_dragonborn_legacy_для_стримеров_и_интерактива.md`  
-> - Настройка Streamer.bot: `twitch_dragonborn_legacy_setting_in_streamer.bot.md`  
-> - Описание стадий: `twitch_dragonborn_legacy_описание_мода_и_стадий.md`  
-> - Changelog и roadmap: `twitch_dragonborn_legacy_changelog_roadmap.md`  
+> - Описание для Nexus: `1_twitch_dragonborn_legacy_nexus_description.md`  
+> - Установка и требования: `2_twitch_dragonborn_legacy_installation_and_requirements.md`  
+> - FAQ и известные проблемы: `3_twitch_dragonborn_legacy_faq_and_known_issues.md`  
+> - Чего мод НЕ делает: `4_twitch_dragonborn_legacy_what_this_mod_does_not_do.md`  
+> - Для стримеров и интерактива: `5_twitch_dragonborn_legacy_for_streamer_and_interactive.md`  
+> - Подключение Twitch и TDL_Twitch.ini: `6_twitch_dragonborn_legacy_twitch_setup.md`  
+> - Описание стадий: `7_twitch_dragonborn_legacy_description_mods_and_stges.md`  
+> - Changelog и roadmap: `8_twitch_dragonborn_legacy_changelog_roadmap.md`  
 
 Этот документ — журнал изменений и план развития.  
-Описание стадий — в `twitch_dragonborn_legacy_описание_мода_и_стадий.md`.
+Описание стадий — в `7_twitch_dragonborn_legacy_description_mods_and_stges.md`.
 
 ---
 
@@ -126,6 +154,34 @@ TDL развивается постепенно и осознанно: прио�
 ---
 
 ## Текущая версия
+
+### Версия 1.1.7 — Twitch напрямую
+
+**Twitch без Streamer.bot**
+- SKSE-плагин сам подключается к Twitch (EventSub): награды за баллы, биты, команды чата, голосования
+- Одноразовый вход по коду (twitch.tv/activate), токен хранится в зашифрованном виде (Windows DPAPI)
+- Все привязки в `Data\SKSE\Plugins\TDL_Twitch.ini`; список через запятую выбирает случайное действие (уровни сложности)
+- Сообщения в игре «кто что сделал», полностью настраиваются (`[Messages]`)
+- `tdl_send.exe` удалён: в моде больше нет исполняемых файлов
+
+**Версия игры**
+- Поддержка Skyrim 1.7.104 (плагин пересобран на CommonLibSSE-NG; плагин теперь под GPL-3.0, исходники на GitHub)
+
+**Модуль респауна встроен**
+- `TDL_RespawningEncounterZones.esp` / `Tdl_patch1.esp` больше не нужны
+- Настройки на странице MCM «Телепорт» (как в игре / свои часы / всегда быстрый)
+- Окно быстрого респауна после случайного опасного телепорта и после быстрого перемещения
+
+**Исправления**
+- Восстановлены фрагменты стадий: действия извне могли ничего не делать (сломанный скрипт фрагментов квеста)
+- Действия терялись после загрузки сохранения (подписка на события не сохранялась)
+- Повторная низкая гравитация больше не обрывает замедленное падение; персонаж не зависает в воздухе
+- Гигант: второй активный эффект сбрасывается правильно
+- «Потеря всего инвентаря»: при таймауте предметы возвращаются, а не теряются
+- Арена могла навсегда заблокироваться; сопровождение могло дать награду дважды
+- Кнопки страницы MCM «Телепорт» ничего не делали
+- Настройки из INI применяются заново после загрузки сохранения
+- Недостающие строки MCM во всех 9 языках (страница «О моде», время арены, настройки респауна)
 
 ### Version 1.0 — Initial Release
 

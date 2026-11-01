@@ -302,7 +302,6 @@ Event OnUpdate()
 		If now >= _sizeEndTime
 			_resetSize = true
 			_ApplyReset(p)
-			Return
 		Else
 			needUpdate = true
 		EndIf
@@ -312,7 +311,6 @@ Event OnUpdate()
 		If now >= _speedEndTime
 			_resetSpeed = true
 			_ApplyReset(p)
-			Return
 		Else
 			needUpdate = true
 		EndIf
