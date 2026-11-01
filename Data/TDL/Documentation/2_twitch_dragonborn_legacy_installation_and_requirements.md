@@ -23,6 +23,7 @@ This document is the single source of truth for installation and prerequisites.
 - powerofthree's Papyrus Extender
 - ConsoleUtilSSE NG (a build that supports your game version; used by the teleport respawn window)
 - SkyUI and MCM Helper (settings menu)
+- UIExtensions (radial menu and stats menu)
 
 ## Optional
 
@@ -84,6 +85,7 @@ This document is the single source of truth for installation and prerequisites.
 - powerofthree's Papyrus Extender
 - ConsoleUtilSSE NG (сборка с поддержкой вашей версии игры; нужна окну респауна телепорта)
 - SkyUI и MCM Helper (меню настроек)
+- UIExtensions (радиальное меню и меню статистики)
 
 ## Необязательно
 

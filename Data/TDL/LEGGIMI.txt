@@ -1,4 +1,4 @@
-TDL - Twitch Dragonborn Legacy 1.1.7
+TDL - Twitch Dragonborn Legacy 1.1.8
 ====================================
 
 I tuoi spettatori di Twitch controllano Skyrim: ricompense con punti canale, bit, comandi di chat
@@ -16,6 +16,8 @@ Requisiti
 - powerofthree's Papyrus Extender
 - ConsoleUtilSSE NG (una versione che supporta la tua versione di gioco)
 - SkyUI + MCM Helper (menu delle impostazioni in gioco)
+- UIExtensions (menu radiale e menu delle statistiche)
+Multilingua di serie: la mod segue la lingua del gioco (9 lingue), nessun file di traduzione necessario.
 Opzionale: True Directional Movement, TrueHUD, Target Focus (usati da alcune fasi).
 
 

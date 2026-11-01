@@ -22,6 +22,13 @@ TDL evolves gradually and deliberately: the priorities are stability, controllab
 
 ## Current version
 
+### Version 1.1.8 — Multilingual out of the box
+
+- The plugin (ESP) is localized: names, effect descriptions and message boxes follow the game language (sLanguage) via Data\Strings, 9 languages
+- Radial menu and stats menu follow the game language too
+- Fixed typos in menu labels (Blessing, High Hrothgar, Wrath of Heaven, Horror)
+- UIExtensions is now listed as a requirement (radial and stats menus)
+
 ### Version 1.1.7 — Native Twitch
 
 **Twitch without Streamer.bot**
@@ -154,6 +161,13 @@ TDL развивается постепенно и осознанно: прио�
 ---
 
 ## Текущая версия
+
+### Версия 1.1.8 — Мультиязычность «из коробки»
+
+- Плагин (ESP) локализован: имена, описания эффектов и окна сообщений берутся на языке игры (sLanguage) из Data\Strings, 9 языков
+- Радиальное меню и меню статистики тоже следуют языку игры
+- Исправлены опечатки в пунктах меню (Благословение, Высокий Хротгар, Гнев небес, Хоррор)
+- UIExtensions добавлен в требования (радиальное меню и меню статистики)
 
 ### Версия 1.1.7 — Twitch напрямую
 

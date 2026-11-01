@@ -56,14 +56,14 @@ Function _ShowMainPage0()
 	String[] t = new String[8]
 	Bool[] e = new Bool[8]
 
-	t[0] = "Other"
-	t[1] = "Chaos"
-	t[2] = "Show"
-	t[3] = "Wrath of Haven"
-	t[4] = "Teleport"
-	t[5] = "Summon"
-	t[6] = "Weather"
-	t[7] = "Next >>>"
+	t[0] = TDL_Lang.T("Other")
+	t[1] = TDL_Lang.T("Chaos")
+	t[2] = TDL_Lang.T("Show")
+	t[3] = TDL_Lang.T("Wrath of Heaven")
+	t[4] = TDL_Lang.T("Teleport")
+	t[5] = TDL_Lang.T("Summon")
+	t[6] = TDL_Lang.T("Weather")
+	t[7] = TDL_Lang.T("Next >>>")
 
 	e[0] = true
 	e[1] = true
@@ -98,13 +98,13 @@ Function _ShowMainPage1()
 	String[] t = new String[8]
 	Bool[] e = new Bool[8]
 
-	t[0] = "<<< Back"
-	t[1] = "Inventory"
-	t[2] = "Characteristic"
-	t[3] = "Virus"
-	t[4] = "Force"
-	t[5] = "Stat"
-	t[6] = "Exit"
+	t[0] = TDL_Lang.T("<<< Back")
+	t[1] = TDL_Lang.T("Inventory")
+	t[2] = TDL_Lang.T("Characteristic")
+	t[3] = TDL_Lang.T("Virus")
+	t[4] = TDL_Lang.T("Force")
+	t[5] = TDL_Lang.T("Stat")
+	t[6] = TDL_Lang.T("Exit")
 	t[7] = ""
 
 	e[0] = true
@@ -141,15 +141,15 @@ Function _ShowOther()
 	String[] t = new String[8]
 	Bool[] e = new Bool[8]
 
-	t[0] = "Healing"
-	t[1] = "Bleassing"
-	t[2] = "Exit"
+	t[0] = TDL_Lang.T("Healing")
+	t[1] = TDL_Lang.T("Blessing")
+	t[2] = TDL_Lang.T("Exit")
 
 	e[0] = true
 	e[1] = true
 	e[2] = true
 
-	Int r = _OpenWheel("Other", t, e)
+	Int r = _OpenWheel(TDL_Lang.T("Other"), t, e)
 	If r == 0
 		_Run(20)
 	ElseIf r == 1
@@ -164,15 +164,15 @@ Function _ShowChaos()
 	String[] t = new String[8]
 	Bool[] e = new Bool[8]
 
-	t[0] = "Low gravity"
-	t[1] = "Backfire"
-	t[2] = "Exit"
+	t[0] = TDL_Lang.T("Low gravity")
+	t[1] = TDL_Lang.T("Backfire")
+	t[2] = TDL_Lang.T("Exit")
 
 	e[0] = true
 	e[1] = true
 	e[2] = true
 
-	Int r = _OpenWheel("Chaos", t, e)
+	Int r = _OpenWheel(TDL_Lang.T("Chaos"), t, e)
 	If r == 0
 		_Run(70)
 	ElseIf r == 1
@@ -188,11 +188,11 @@ Function _ShowShow()
 	Bool[] e = new Bool[8]
 
 	t[0] = "\"Hero\""
-	t[1] = "Horror-mod"
-	t[2] = "Wave of enemies"
-	t[3] = "Escort"
-	t[4] = "Hunter"
-	t[5] = "Exit"
+	t[1] = TDL_Lang.T("Horror")
+	t[2] = TDL_Lang.T("Wave of enemies")
+	t[3] = TDL_Lang.T("Escort")
+	t[4] = TDL_Lang.T("Hunter")
+	t[5] = TDL_Lang.T("Exit")
 
 	e[0] = true
 	e[1] = true
@@ -201,7 +201,7 @@ Function _ShowShow()
 	e[4] = true
 	e[5] = true
 
-	Int r = _OpenWheel("Show", t, e)
+	Int r = _OpenWheel(TDL_Lang.T("Show"), t, e)
 	If r == 0
 		_Run(50)
 	ElseIf r == 1
@@ -222,17 +222,17 @@ Function _ShowWrath()
 	String[] t = new String[8]
 	Bool[] e = new Bool[8]
 
-	t[0] = "Storm"
-	t[1] = "Fire"
-	t[2] = "Frost"
-	t[3] = "Exit"
+	t[0] = TDL_Lang.T("Storm")
+	t[1] = TDL_Lang.T("Fire")
+	t[2] = TDL_Lang.T("Frost")
+	t[3] = TDL_Lang.T("Exit")
 
 	e[0] = true
 	e[1] = true
 	e[2] = true
 	e[3] = true
 
-	Int r = _OpenWheel("Wrath of Haven", t, e)
+	Int r = _OpenWheel(TDL_Lang.T("Wrath of Heaven"), t, e)
 	If r == 0
 		_Run(11)
 	ElseIf r == 1
@@ -249,14 +249,14 @@ Function _ShowTeleportPage0()
 	String[] t = new String[8]
 	Bool[] e = new Bool[8]
 
-	t[0] = "Random city"
-	t[1] = "Random location"
-	t[2] = "Hight Hrothar"
-	t[3] = "Whiterun"
-	t[4] = "Solitude"
-	t[5] = "Windhelm"
-	t[6] = "Riften"
-	t[7] = "Next >>>"
+	t[0] = TDL_Lang.T("Random city")
+	t[1] = TDL_Lang.T("Random location")
+	t[2] = TDL_Lang.T("High Hrothgar")
+	t[3] = TDL_Lang.T("Whiterun")
+	t[4] = TDL_Lang.T("Solitude")
+	t[5] = TDL_Lang.T("Windhelm")
+	t[6] = TDL_Lang.T("Riften")
+	t[7] = TDL_Lang.T("Next >>>")
 
 	e[0] = true
 	e[1] = true
@@ -267,7 +267,7 @@ Function _ShowTeleportPage0()
 	e[6] = true
 	e[7] = true
 
-	Int r = _OpenWheel("Teleport", t, e)
+	Int r = _OpenWheel(TDL_Lang.T("Teleport"), t, e)
 	If r == 0
 		_Run(90)
 	ElseIf r == 1
@@ -291,11 +291,11 @@ Function _ShowTeleportPage1()
 	String[] t = new String[8]
 	Bool[] e = new Bool[8]
 
-	t[0] = "<<< Back"
-	t[1] = "Markarth"
-	t[2] = "Falkreath"
-	t[3] = "Dawnstar"
-	t[4] = "Exit"
+	t[0] = TDL_Lang.T("<<< Back")
+	t[1] = TDL_Lang.T("Markarth")
+	t[2] = TDL_Lang.T("Falkreath")
+	t[3] = TDL_Lang.T("Dawnstar")
+	t[4] = TDL_Lang.T("Exit")
 
 	e[0] = true
 	e[1] = true
@@ -303,7 +303,7 @@ Function _ShowTeleportPage1()
 	e[3] = true
 	e[4] = true
 
-	Int r = _OpenWheel("Teleport", t, e)
+	Int r = _OpenWheel(TDL_Lang.T("Teleport"), t, e)
 	If r == 0
 		_ShowTeleportPage0()
 	ElseIf r == 1
@@ -322,14 +322,14 @@ Function _ShowSummon()
 	String[] t = new String[8]
 	Bool[] e = new Bool[8]
 
-	t[0] = "Any"
-	t[1] = "Skeleton"
-	t[2] = "Animal"
-	t[3] = "Humanoid"
-	t[4] = "Undead"
-	t[5] = "Strong"
-	t[6] = "Dragon"
-	t[7] = "Exit"
+	t[0] = TDL_Lang.T("Any")
+	t[1] = TDL_Lang.T("Skeleton")
+	t[2] = TDL_Lang.T("Animal")
+	t[3] = TDL_Lang.T("Humanoid")
+	t[4] = TDL_Lang.T("Undead")
+	t[5] = TDL_Lang.T("Strong")
+	t[6] = TDL_Lang.T("Dragon")
+	t[7] = TDL_Lang.T("Exit")
 
 	e[0] = true
 	e[1] = true
@@ -340,7 +340,7 @@ Function _ShowSummon()
 	e[6] = true
 	e[7] = true
 
-	Int r = _OpenWheel("Summon", t, e)
+	Int r = _OpenWheel(TDL_Lang.T("Summon"), t, e)
 	If r == 0
 		_Run(40)
 	ElseIf r == 1
@@ -365,13 +365,13 @@ Function _ShowWeather()
 	String[] t = new String[8]
 	Bool[] e = new Bool[8]
 
-	t[0] = "Clear"
-	t[1] = "Rain"
-	t[2] = "Snow"
-	t[3] = "Storm"
-	t[4] = "Fog"
-	t[5] = "Reset"
-	t[6] = "Exit"
+	t[0] = TDL_Lang.T("Clear")
+	t[1] = TDL_Lang.T("Rain")
+	t[2] = TDL_Lang.T("Snow")
+	t[3] = TDL_Lang.T("Storm")
+	t[4] = TDL_Lang.T("Fog")
+	t[5] = TDL_Lang.T("Reset")
+	t[6] = TDL_Lang.T("Exit")
 
 	e[0] = true
 	e[1] = true
@@ -381,7 +381,7 @@ Function _ShowWeather()
 	e[5] = true
 	e[6] = true
 
-	Int r = _OpenWheel("Weather", t, e)
+	Int r = _OpenWheel(TDL_Lang.T("Weather"), t, e)
 	If r == 0
 		_Run(110)
 	ElseIf r == 1
@@ -404,15 +404,15 @@ Function _ShowInventory()
 	String[] t = new String[8]
 	Bool[] e = new Bool[8]
 
-	t[0] = "Scatter"
-	t[1] = "Drop All"
-	t[2] = "Exit"
+	t[0] = TDL_Lang.T("Scatter")
+	t[1] = TDL_Lang.T("Drop All")
+	t[2] = TDL_Lang.T("Exit")
 
 	e[0] = true
 	e[1] = true
 	e[2] = true
 
-	Int r = _OpenWheel("Inventory", t, e)
+	Int r = _OpenWheel(TDL_Lang.T("Inventory"), t, e)
 	If r == 0
 		_Run(80)
 	ElseIf r == 1
@@ -427,12 +427,12 @@ Function _ShowCharacteristic()
 	String[] t = new String[8]
 	Bool[] e = new Bool[8]
 
-	t[0] = "Big"
-	t[1] = "Small"
-	t[2] = "Speed"
-	t[3] = "Slow"
-	t[4] = "Reset"
-	t[5] = "Exit"
+	t[0] = TDL_Lang.T("Big")
+	t[1] = TDL_Lang.T("Small")
+	t[2] = TDL_Lang.T("Speed")
+	t[3] = TDL_Lang.T("Slow")
+	t[4] = TDL_Lang.T("Reset")
+	t[5] = TDL_Lang.T("Exit")
 
 	e[0] = true
 	e[1] = true
@@ -441,7 +441,7 @@ Function _ShowCharacteristic()
 	e[4] = true
 	e[5] = true
 
-	Int r = _OpenWheel("Characteristic", t, e)
+	Int r = _OpenWheel(TDL_Lang.T("Characteristic"), t, e)
 	If r == 0
 		_Run(120)
 	ElseIf r == 1
@@ -462,17 +462,17 @@ Function _ShowVirus()
 	String[] t = new String[8]
 	Bool[] e = new Bool[8]
 
-	t[0] = "Disease"
-	t[1] = "Werewolf"
-	t[2] = "Vampire"
-	t[3] = "Exit"
+	t[0] = TDL_Lang.T("Disease")
+	t[1] = TDL_Lang.T("Werewolf")
+	t[2] = TDL_Lang.T("Vampire")
+	t[3] = TDL_Lang.T("Exit")
 
 	e[0] = true
 	e[1] = true
 	e[2] = true
 	e[3] = true
 
-	Int r = _OpenWheel("Virus", t, e)
+	Int r = _OpenWheel(TDL_Lang.T("Virus"), t, e)
 	If r == 0
 		_Run(100)
 	ElseIf r == 1
@@ -490,14 +490,14 @@ Function _ShowForcePage0()
 	String[] t = new String[8]
 	Bool[] e = new Bool[8]
 
-	t[0] = "Healing"
-	t[1] = "Random city"
-	t[2] = "Random location"
-	t[3] = "Any"
-	t[4] = "Skeleton"
-	t[5] = "Animal"
-	t[6] = "Humanoid"
-	t[7] = "Next >>>"
+	t[0] = TDL_Lang.T("Healing")
+	t[1] = TDL_Lang.T("Random city")
+	t[2] = TDL_Lang.T("Random location")
+	t[3] = TDL_Lang.T("Any")
+	t[4] = TDL_Lang.T("Skeleton")
+	t[5] = TDL_Lang.T("Animal")
+	t[6] = TDL_Lang.T("Humanoid")
+	t[7] = TDL_Lang.T("Next >>>")
 
 	e[0] = true
 	e[1] = true
@@ -508,7 +508,7 @@ Function _ShowForcePage0()
 	e[6] = true
 	e[7] = true
 
-	Int r = _OpenWheel("Force", t, e)
+	Int r = _OpenWheel(TDL_Lang.T("Force"), t, e)
 	If r == 0
 		_ForceFlow(20)
 	ElseIf r == 1
@@ -532,13 +532,13 @@ Function _ShowForcePage1()
 	String[] t = new String[8]
 	Bool[] e = new Bool[8]
 
-	t[0] = "<<< Back"
-	t[1] = "Undead"
-	t[2] = "Strong"
-	t[3] = "Dragon"
-	t[4] = "Disease"
-	t[5] = "Scatter"
-	t[6] = "Exit"
+	t[0] = TDL_Lang.T("<<< Back")
+	t[1] = TDL_Lang.T("Undead")
+	t[2] = TDL_Lang.T("Strong")
+	t[3] = TDL_Lang.T("Dragon")
+	t[4] = TDL_Lang.T("Disease")
+	t[5] = TDL_Lang.T("Scatter")
+	t[6] = TDL_Lang.T("Exit")
 
 	e[0] = true
 	e[1] = true
@@ -548,7 +548,7 @@ Function _ShowForcePage1()
 	e[5] = true
 	e[6] = true
 
-	Int r = _OpenWheel("Force", t, e)
+	Int r = _OpenWheel(TDL_Lang.T("Force"), t, e)
 	If r == 0
 		_ShowForcePage0()
 	ElseIf r == 1
@@ -590,30 +590,30 @@ Int Function _ForcePickCount(Int aiStage)
 	; Списки по твоему описанию
 	; Summon: 7/14/21/28/35/42/50
 	If aiStage >= 40 && aiStage <= 46
-		Return _PickFromIntList("Count (Summon)", 7, 14, 21, 28, 35, 42, 50)
+		Return _PickFromIntList(TDL_Lang.T("Count (Summon)"), 7, 14, 21, 28, 35, 42, 50)
 	EndIf
 	
 	If aiStage == 80
-		Return _PickFromIntList("Count (Scatter)", 4, 5, 6, 7, 8, 9, 10)
+		Return _PickFromIntList(TDL_Lang.T("Count (Scatter)"), 4, 5, 6, 7, 8, 9, 10)
 	EndIf
 
 	; Teleport random city/location: 1..5
 	If aiStage == 90 || aiStage == 91
-		Return _PickFromIntList("Count (Teleport)", 1, 2, 3, 4, 5, -1, -1)
+		Return _PickFromIntList(TDL_Lang.T("Count (Teleport)"), 1, 2, 3, 4, 5, -1, -1)
 	EndIf
 
 	; Disease: 2/4/6/8/10/12/14
 	If aiStage == 100
-		Return _PickFromIntList("Count (Disease)", 2, 4, 6, 8, 10, 12, 14)
+		Return _PickFromIntList(TDL_Lang.T("Count (Disease)"), 2, 4, 6, 8, 10, 12, 14)
 	EndIf
 
 	; Healing (и прочее, если добавишь): даю разумный дефолт 1..10
-	Return _PickFromIntList("Count", 1, 2, 3, 5, 7, 9, 10)
+	Return _PickFromIntList(TDL_Lang.T("Count"), 1, 2, 3, 5, 7, 9, 10)
 EndFunction
 
 Float Function _ForcePickInterval()
 	; Интервал: 2/4/6/8/10 секунд (как было описано)
-	Int v = _PickFromIntList("Interval (sec)", 2, 4, 6, 8, 10, -1, -1)
+	Int v = _PickFromIntList(TDL_Lang.T("Interval (sec)"), 2, 4, 6, 8, 10, -1, -1)
 	If v <= 0
 		Return 0.0
 	EndIf
@@ -645,7 +645,7 @@ Int Function _PickFromIntList(String title, Int a, Int b, Int c, Int d, Int ee, 
 		i += 1
 	EndWhile
 
-	t[7] = "Exit"
+	t[7] = TDL_Lang.T("Exit")
 	e[7] = true
 
 	Int r = _OpenWheel(title, t, e)
