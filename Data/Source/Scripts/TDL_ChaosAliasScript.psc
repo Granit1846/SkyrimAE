@@ -549,3 +549,48 @@ Event OnReset()
 	_backfireActive = False
 	_lowGJumpTarget = 0.0
 EndEvent
+
+; =========================
+; Respawn integration (formerly TDL_RespawningEncounterZones.esp)
+; This alias holds the player, so it gets OnPlayerLoadGame and fast travel events for TDL_Teleport.
+; =========================
+Event OnInit()
+	_RegisterFastTravel()
+EndEvent
+
+Event OnPlayerLoadGame()
+	_RegisterFastTravel()
+	; Timed chaos uses real time, which restarts with the game; game settings are reset too, so end them cleanly
+	Actor p = Game.GetPlayer()
+	If _lowGActive
+		_StopLowG(p)
+	EndIf
+	If _backfireActive
+		_StopBackfire()
+	EndIf
+	TDL_Teleport tp = GetOwningQuest() as TDL_Teleport
+	If tp
+		tp.RespawnOnGameLoad()
+	EndIf
+EndEvent
+
+Function _RegisterFastTravel()
+	PO3_Events_Alias.RegisterForFastTravelConfirmed(Self)
+	PO3_Events_Alias.RegisterForOnPlayerFastTravelEnd(Self)
+EndFunction
+
+Event OnFastTravelConfirmed(ObjectReference asMarkerReference)
+	_BeginRespawnForce()
+EndEvent
+
+; Travel takes game hours, so restart the window on arrival
+Event OnPlayerFastTravelEnd(Float afTravelGameTimeHours)
+	_BeginRespawnForce()
+EndEvent
+
+Function _BeginRespawnForce()
+	TDL_Teleport tp = GetOwningQuest() as TDL_Teleport
+	If tp
+		tp.RespawnBeginTemporaryForce(2.0)
+	EndIf
+EndFunction

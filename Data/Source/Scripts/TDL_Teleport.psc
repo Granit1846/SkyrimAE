@@ -40,11 +40,6 @@ ObjectReference Property Marker_Dawnstar Auto
 Spell   Property TDL_GodBuff Auto
 Message Property TDL_Teleport_RandomWarningMsg Auto
 
-; ---------- OPTIONAL: TDL_RespawningEncounterZones integration ----------
-; Ёти свойства Ќ≈ об€зательны. ≈сли они не заполнены (None) Ч код ниже ничего не делает.
-GlobalVariable Property TDL_Respawn_Mode Auto
-GlobalVariable Property TDL_Respawn_iHoursToRespawnCell Auto
-GlobalVariable Property TDL_Respawn_iHoursToRespawnCellCleared Auto
 
 
 ; =====================================================
@@ -56,7 +51,13 @@ Float _safetyEndRT = 0.0
 ; =====================================================
 ; INTERNAL STATE (respawn force window)
 ; =====================================================
-Int   _respawnPrevMode = 0
+; Respawn settings (formerly TDL_RespawningEncounterZones.esp), kept in the save
+Int   _respawnMode = 1
+Int   _respawnCustomCell = 48
+Int   _respawnCustomCleared = 60
+; Engine values before a force window in default mode (another mod may have changed them)
+Int   _respawnSavedCell = 0
+Int   _respawnSavedCleared = 0
 Float _respawnForceEndGT = 0.0
 
 Int MODE_DEFAULT = 1
@@ -91,8 +92,8 @@ Bool Function RunStage(Int aiStage, Actor playerRef)
 			Return False
 		EndIf
 
-		; Force (2h) only if TDL_RespawningEncounterZones is wired via properties
-		_RespawnPatch_BeginTemporaryForce(2.0)
+		; Fast respawn for 2 game hours, then the chosen mode returns
+		RespawnBeginTemporaryForce(2.0)
 
 		If TDL_Teleport_RandomWarningMsg
 			TDL_Teleport_RandomWarningMsg.Show()
@@ -217,99 +218,118 @@ EndFunction
 
 
 ; =====================================================
-; OPTIONAL: RESPAWN PATCH (Force window 2h, then restore previous mode)
-; Active only if TDL_Respawn_Mode property is filled (not None)
+; RESPAWN (formerly TDL_RespawningEncounterZones.esp)
+; Modes: 1 = game default, 2 = custom hours (MCM), 3 = always fast.
+; A temporary force window (random teleport, fast travel) uses fast respawn for N game hours,
+; then the chosen mode returns. Game settings are not saved, so the player alias
+; (TDL_ChaosAliasScript) calls RespawnOnGameLoad on every load.
 ; =====================================================
-Bool Function _RespawnPatch_IsEnabled()
-	If TDL_Respawn_Mode == None
-		Return False
-	EndIf
-	Return True
+Int Function GetRespawnMode()
+	Return _respawnMode
 EndFunction
 
-Function _RespawnPatch_BeginTemporaryForce(Float hours)
-	If !_RespawnPatch_IsEnabled()
+Int Function GetRespawnCustomCell()
+	Return _respawnCustomCell
+EndFunction
+
+Int Function GetRespawnCustomCleared()
+	Return _respawnCustomCleared
+EndFunction
+
+Function SetRespawnMode(Int mode)
+	If mode < MODE_DEFAULT || mode > MODE_FORCE
+		mode = MODE_DEFAULT
+	EndIf
+	_respawnMode = mode
+	RespawnApplyCurrent()
+EndFunction
+
+Function SetRespawnCustom(Int cellHours, Int clearedHours)
+	_respawnCustomCell = cellHours
+	_respawnCustomCleared = clearedHours
+	If _respawnMode == MODE_CUSTOM
+		RespawnApplyCurrent()
+	EndIf
+EndFunction
+
+; Values in effect right now: a force window wins over the chosen mode
+Int Function GetRespawnActiveCell()
+	If _respawnForceEndGT > 0.0 || _respawnMode == MODE_FORCE
+		Return FORCE_CELL
+	ElseIf _respawnMode == MODE_CUSTOM
+		Return _respawnCustomCell
+	EndIf
+	Return DEFAULT_CELL
+EndFunction
+
+Int Function GetRespawnActiveCleared()
+	If _respawnForceEndGT > 0.0 || _respawnMode == MODE_FORCE
+		Return FORCE_CLEARED
+	ElseIf _respawnMode == MODE_CUSTOM
+		Return _respawnCustomCleared
+	EndIf
+	Return DEFAULT_CLEARED
+EndFunction
+
+Function RespawnApplyCurrent()
+	; Default mode outside a window: give back what the game (or another mod) had
+	If _respawnMode == MODE_DEFAULT && _respawnForceEndGT <= 0.0 && _respawnSavedCell > 0
+		_ApplyRespawnValues(_respawnSavedCell, _respawnSavedCleared)
+		_respawnSavedCell = 0
+		_respawnSavedCleared = 0
 		Return
 	EndIf
+	_ApplyRespawnValues(GetRespawnActiveCell(), GetRespawnActiveCleared())
+EndFunction
+
+Function RespawnBeginTemporaryForce(Float hours)
 	If hours <= 0.0
 		hours = 2.0
 	EndIf
-
-	; если окно ещЄ не активно Ч запоминаем исходный режим
-	If _respawnForceEndGT <= 0.0
-		_respawnPrevMode = TDL_Respawn_Mode.GetValueInt()
+	If _respawnMode == MODE_DEFAULT && _respawnForceEndGT <= 0.0
+		_respawnSavedCell = Game.GetGameSettingInt("iHoursToRespawnCell")
+		_respawnSavedCleared = Game.GetGameSettingInt("iHoursToRespawnCellCleared")
 	EndIf
-
 	_respawnForceEndGT = Utility.GetCurrentGameTime() + (hours / 24.0)
-
-	_RespawnPatch_ApplyForce()
+	RespawnApplyCurrent()
 	RegisterForSingleUpdateGameTime(hours)
 EndFunction
 
-Event OnPlayerLoadGame()
-	_RespawnPatch_Tick()
-EndEvent
+Function RespawnOnGameLoad()
+	; Default mode with no window: leave the engine values (and other mods) alone
+	If _respawnMode == MODE_DEFAULT && _respawnForceEndGT <= 0.0
+		Return
+	EndIf
+	_RespawnTick()
+EndFunction
 
 Event OnUpdateGameTime()
-	_RespawnPatch_Tick()
+	_RespawnTick()
 EndEvent
 
-Function _RespawnPatch_Tick()
-	If !_RespawnPatch_IsEnabled()
-		Return
-	EndIf
-	If _respawnForceEndGT <= 0.0
-		Return
-	EndIf
-
-	Float now = Utility.GetCurrentGameTime()
-	If now < _respawnForceEndGT
-		Float remainingHours = (_respawnForceEndGT - now) * 24.0
-		If remainingHours < 0.05
-			remainingHours = 0.05
+Function _RespawnTick()
+	If _respawnForceEndGT > 0.0
+		Float now = Utility.GetCurrentGameTime()
+		If now < _respawnForceEndGT
+			Float remainingHours = (_respawnForceEndGT - now) * 24.0
+			If remainingHours < 0.05
+				remainingHours = 0.05
+			EndIf
+			RegisterForSingleUpdateGameTime(remainingHours)
+		Else
+			_respawnForceEndGT = 0.0
 		EndIf
-		_RespawnPatch_ApplyForce()
-		RegisterForSingleUpdateGameTime(remainingHours)
-		Return
 	EndIf
-
-	_respawnForceEndGT = 0.0
-	If _respawnPrevMode <= 0
-		_respawnPrevMode = MODE_DEFAULT
-	EndIf
-
-	TDL_Respawn_Mode.SetValueInt(_respawnPrevMode)
-	_RespawnPatch_ApplyMode(_respawnPrevMode)
+	RespawnApplyCurrent()
 EndFunction
 
-Function _RespawnPatch_ApplyForce()
-	TDL_Respawn_Mode.SetValueInt(MODE_FORCE)
-	ConsoleUtil.ExecuteCommand("setgs iHoursToRespawnCell " + FORCE_CELL)
-	ConsoleUtil.ExecuteCommand("setgs iHoursToRespawnCellCleared " + FORCE_CLEARED)
-EndFunction
-
-Function _RespawnPatch_ApplyMode(Int mode)
-	If mode == MODE_DEFAULT
-		ConsoleUtil.ExecuteCommand("setgs iHoursToRespawnCell " + DEFAULT_CELL)
-		ConsoleUtil.ExecuteCommand("setgs iHoursToRespawnCellCleared " + DEFAULT_CLEARED)
-		Return
+Function _ApplyRespawnValues(Int cellHours, Int clearedHours)
+	If cellHours < 1
+		cellHours = 1
 	EndIf
-
-	If mode == MODE_CUSTOM
-		Int vCell = DEFAULT_CELL
-		Int vCleared = DEFAULT_CLEARED
-
-		If TDL_Respawn_iHoursToRespawnCell
-			vCell = TDL_Respawn_iHoursToRespawnCell.GetValueInt()
-		EndIf
-		If TDL_Respawn_iHoursToRespawnCellCleared
-			vCleared = TDL_Respawn_iHoursToRespawnCellCleared.GetValueInt()
-		EndIf
-
-		ConsoleUtil.ExecuteCommand("setgs iHoursToRespawnCell " + vCell)
-		ConsoleUtil.ExecuteCommand("setgs iHoursToRespawnCellCleared " + vCleared)
-		Return
+	If clearedHours < 1
+		clearedHours = 1
 	EndIf
-
-	_RespawnPatch_ApplyForce()
+	ConsoleUtil.ExecuteCommand("setgs iHoursToRespawnCell " + cellHours)
+	ConsoleUtil.ExecuteCommand("setgs iHoursToRespawnCellCleared " + clearedHours)
 EndFunction
