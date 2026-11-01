@@ -12,7 +12,7 @@ Function BuildPage(SKI_ConfigBase mcm)
 
 	mcm.SetCursorPosition(0)
 	mcm.AddHeaderOption("$TDLAboutHeader")
-	mcm.AddTextOption("$TDLAboutModVersion", "1.1.7")
+	mcm.AddTextOption("$TDLAboutModVersion", "1.1.8")
 	mcm.AddTextOption("$TDLAboutMCMVersion", "27")
 	mcm.AddTextOption("$TDLAboutActiveFunctions", "45")
 	mcm.AddTextOption("$TDLAboutAuthor", "Skeorz")

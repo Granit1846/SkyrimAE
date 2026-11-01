@@ -16,20 +16,20 @@ Function _ShowGroups(TDL_StatsQuest stats) Global
 	EndIf
 
 	m.ResetMenu()
-	m.AddEntryItem("Reset statistics")
-	m.AddEntryItem("Exit")
+	m.AddEntryItem(TDL_Lang.T("Reset statistics"))
+	m.AddEntryItem(TDL_Lang.T("Exit"))
 
-	m.AddEntryItem("Other")
-	m.AddEntryItem("Chaos")
-	m.AddEntryItem("Show")
-	m.AddEntryItem("Wrath")
-	m.AddEntryItem("Teleport")
-	m.AddEntryItem("Summon")
-	m.AddEntryItem("Weather")
-	m.AddEntryItem("Inventory")
-	m.AddEntryItem("Characteristic")
-	m.AddEntryItem("Virus")
-	m.AddEntryItem("Force")
+	m.AddEntryItem(TDL_Lang.T("Other"))
+	m.AddEntryItem(TDL_Lang.T("Chaos"))
+	m.AddEntryItem(TDL_Lang.T("Show"))
+	m.AddEntryItem(TDL_Lang.T("Wrath"))
+	m.AddEntryItem(TDL_Lang.T("Teleport"))
+	m.AddEntryItem(TDL_Lang.T("Summon"))
+	m.AddEntryItem(TDL_Lang.T("Weather"))
+	m.AddEntryItem(TDL_Lang.T("Inventory"))
+	m.AddEntryItem(TDL_Lang.T("Characteristic"))
+	m.AddEntryItem(TDL_Lang.T("Virus"))
+	m.AddEntryItem(TDL_Lang.T("Force"))
 
 	m.OpenMenu()
 	Int r = m.GetResultInt()
@@ -72,8 +72,8 @@ Function _ShowStages(TDL_StatsQuest stats, String title, Int[] stages, String[] 
 	EndIf
 
 	m.ResetMenu()
-	m.AddEntryItem("<<< Back")
-	m.AddEntryItem("Exit")
+	m.AddEntryItem(TDL_Lang.T("<<< Back"))
+	m.AddEntryItem(TDL_Lang.T("Exit"))
 
 	Int i = 0
 	While i < stages.Length
@@ -99,47 +99,47 @@ EndFunction
 ; ===== GROUPS =====
 
 Function _ShowGroup_Other(TDL_StatsQuest stats) Global
-	_ShowStages(stats, "Other", _Stages_Other(), _Names_Other())
+	_ShowStages(stats, TDL_Lang.T("Other"), _Stages_Other(), _Names_Other())
 EndFunction
 
 Function _ShowGroup_Chaos(TDL_StatsQuest stats) Global
-	_ShowStages(stats, "Chaos", _Stages_Chaos(), _Names_Chaos())
+	_ShowStages(stats, TDL_Lang.T("Chaos"), _Stages_Chaos(), _Names_Chaos())
 EndFunction
 
 Function _ShowGroup_Show(TDL_StatsQuest stats) Global
-	_ShowStages(stats, "Show", _Stages_Show(), _Names_Show())
+	_ShowStages(stats, TDL_Lang.T("Show"), _Stages_Show(), _Names_Show())
 EndFunction
 
 Function _ShowGroup_Wrath(TDL_StatsQuest stats) Global
-	_ShowStages(stats, "Wrath", _Stages_Wrath(), _Names_Wrath())
+	_ShowStages(stats, TDL_Lang.T("Wrath"), _Stages_Wrath(), _Names_Wrath())
 EndFunction
 
 Function _ShowGroup_Teleport(TDL_StatsQuest stats) Global
-	_ShowStages(stats, "Teleport", _Stages_Teleport(), _Names_Teleport())
+	_ShowStages(stats, TDL_Lang.T("Teleport"), _Stages_Teleport(), _Names_Teleport())
 EndFunction
 
 Function _ShowGroup_Summon(TDL_StatsQuest stats) Global
-	_ShowStages(stats, "Summon", _Stages_Summon(), _Names_Summon())
+	_ShowStages(stats, TDL_Lang.T("Summon"), _Stages_Summon(), _Names_Summon())
 EndFunction
 
 Function _ShowGroup_Weather(TDL_StatsQuest stats) Global
-	_ShowStages(stats, "Weather", _Stages_Weather(), _Names_Weather())
+	_ShowStages(stats, TDL_Lang.T("Weather"), _Stages_Weather(), _Names_Weather())
 EndFunction
 
 Function _ShowGroup_Inventory(TDL_StatsQuest stats) Global
-	_ShowStages(stats, "Inventory", _Stages_Inventory(), _Names_Inventory())
+	_ShowStages(stats, TDL_Lang.T("Inventory"), _Stages_Inventory(), _Names_Inventory())
 EndFunction
 
 Function _ShowGroup_Characteristic(TDL_StatsQuest stats) Global
-	_ShowStages(stats, "Characteristic", _Stages_Characteristic(), _Names_Characteristic())
+	_ShowStages(stats, TDL_Lang.T("Characteristic"), _Stages_Characteristic(), _Names_Characteristic())
 EndFunction
 
 Function _ShowGroup_Virus(TDL_StatsQuest stats) Global
-	_ShowStages(stats, "Virus", _Stages_Virus(), _Names_Virus())
+	_ShowStages(stats, TDL_Lang.T("Virus"), _Stages_Virus(), _Names_Virus())
 EndFunction
 
 Function _ShowGroup_Force(TDL_StatsQuest stats) Global
-	_ShowStages(stats, "Force", _Stages_Force(), _Names_Force())
+	_ShowStages(stats, TDL_Lang.T("Force"), _Stages_Force(), _Names_Force())
 EndFunction
 
 ; ===== DATA =====
@@ -153,8 +153,8 @@ EndFunction
 
 String[] Function _Names_Other() Global
 	String[] a = new String[2]
-	a[0] = "Healing"
-	a[1] = "Bleassing"
+	a[0] = TDL_Lang.T("Healing")
+	a[1] = TDL_Lang.T("Blessing")
 	Return a
 EndFunction
 
@@ -167,8 +167,8 @@ EndFunction
 
 String[] Function _Names_Chaos() Global
 	String[] a = new String[2]
-	a[0] = "Low gravity"
-	a[1] = "Backfire"
+	a[0] = TDL_Lang.T("Low gravity")
+	a[1] = TDL_Lang.T("Backfire")
 	Return a
 EndFunction
 
@@ -185,10 +185,10 @@ EndFunction
 String[] Function _Names_Show() Global
 	String[] a = new String[5]
 	a[0] = "\"Hero\""
-	a[1] = "Horror-mod"
-	a[2] = "Wave of enemies"
-	a[3] = "Escort"
-	a[4] = "Hunter"
+	a[1] = TDL_Lang.T("Horror")
+	a[2] = TDL_Lang.T("Wave of enemies")
+	a[3] = TDL_Lang.T("Escort")
+	a[4] = TDL_Lang.T("Hunter")
 	Return a
 EndFunction
 
@@ -202,9 +202,9 @@ EndFunction
 
 String[] Function _Names_Wrath() Global
 	String[] a = new String[3]
-	a[0] = "Storm"
-	a[1] = "Fire"
-	a[2] = "Frost"
+	a[0] = TDL_Lang.T("Storm")
+	a[1] = TDL_Lang.T("Fire")
+	a[2] = TDL_Lang.T("Frost")
 	Return a
 EndFunction
 
@@ -225,16 +225,16 @@ EndFunction
 
 String[] Function _Names_Teleport() Global
 	String[] a = new String[10]
-	a[0] = "Random city"
-	a[1] = "Random location"
-	a[2] = "Hight Hrothar"
-	a[3] = "Whiterun"
-	a[4] = "Solitude"
-	a[5] = "Windhelm"
-	a[6] = "Riften"
-	a[7] = "Markarth"
-	a[8] = "Falkreath"
-	a[9] = "Dawnstar"
+	a[0] = TDL_Lang.T("Random city")
+	a[1] = TDL_Lang.T("Random location")
+	a[2] = TDL_Lang.T("High Hrothgar")
+	a[3] = TDL_Lang.T("Whiterun")
+	a[4] = TDL_Lang.T("Solitude")
+	a[5] = TDL_Lang.T("Windhelm")
+	a[6] = TDL_Lang.T("Riften")
+	a[7] = TDL_Lang.T("Markarth")
+	a[8] = TDL_Lang.T("Falkreath")
+	a[9] = TDL_Lang.T("Dawnstar")
 	Return a
 EndFunction
 
@@ -252,13 +252,13 @@ EndFunction
 
 String[] Function _Names_Summon() Global
 	String[] a = new String[7]
-	a[0] = "Any"
-	a[1] = "Skeleton"
-	a[2] = "Animal"
-	a[3] = "Humanoid"
-	a[4] = "Undead"
-	a[5] = "Strong"
-	a[6] = "Dragon"
+	a[0] = TDL_Lang.T("Any")
+	a[1] = TDL_Lang.T("Skeleton")
+	a[2] = TDL_Lang.T("Animal")
+	a[3] = TDL_Lang.T("Humanoid")
+	a[4] = TDL_Lang.T("Undead")
+	a[5] = TDL_Lang.T("Strong")
+	a[6] = TDL_Lang.T("Dragon")
 	Return a
 EndFunction
 
@@ -275,12 +275,12 @@ EndFunction
 
 String[] Function _Names_Weather() Global
 	String[] a = new String[6]
-	a[0] = "Clear"
-	a[1] = "Rain"
-	a[2] = "Snow"
-	a[3] = "Storm"
-	a[4] = "Fog"
-	a[5] = "Reset"
+	a[0] = TDL_Lang.T("Clear")
+	a[1] = TDL_Lang.T("Rain")
+	a[2] = TDL_Lang.T("Snow")
+	a[3] = TDL_Lang.T("Storm")
+	a[4] = TDL_Lang.T("Fog")
+	a[5] = TDL_Lang.T("Reset")
 	Return a
 EndFunction
 
@@ -293,8 +293,8 @@ EndFunction
 
 String[] Function _Names_Inventory() Global
 	String[] a = new String[2]
-	a[0] = "Scatter"
-	a[1] = "Drop All"
+	a[0] = TDL_Lang.T("Scatter")
+	a[1] = TDL_Lang.T("Drop All")
 	Return a
 EndFunction
 
@@ -310,11 +310,11 @@ EndFunction
 
 String[] Function _Names_Characteristic() Global
 	String[] a = new String[5]
-	a[0] = "Big"
-	a[1] = "Small"
-	a[2] = "Speed"
-	a[3] = "Slow"
-	a[4] = "Reset"
+	a[0] = TDL_Lang.T("Big")
+	a[1] = TDL_Lang.T("Small")
+	a[2] = TDL_Lang.T("Speed")
+	a[3] = TDL_Lang.T("Slow")
+	a[4] = TDL_Lang.T("Reset")
 	Return a
 EndFunction
 
@@ -328,9 +328,9 @@ EndFunction
 
 String[] Function _Names_Virus() Global
 	String[] a = new String[3]
-	a[0] = "Disease"
-	a[1] = "Werewolf"
-	a[2] = "Vampire"
+	a[0] = TDL_Lang.T("Disease")
+	a[1] = TDL_Lang.T("Werewolf")
+	a[2] = TDL_Lang.T("Vampire")
 	Return a
 EndFunction
 
@@ -353,17 +353,17 @@ EndFunction
 
 String[] Function _Names_Force() Global
 	String[] a = new String[12]
-	a[0] = "Healing"
-	a[1] = "Random city"
-	a[2] = "Random location"
-	a[3] = "Any"
-	a[4] = "Skeleton"
-	a[5] = "Animal"
-	a[6] = "Humanoid"
-	a[7] = "Undead"
-	a[8] = "Strong"
-	a[9] = "Dragon"
-	a[10] = "Disease"
-	a[11] = "Scatter"
+	a[0] = TDL_Lang.T("Healing")
+	a[1] = TDL_Lang.T("Random city")
+	a[2] = TDL_Lang.T("Random location")
+	a[3] = TDL_Lang.T("Any")
+	a[4] = TDL_Lang.T("Skeleton")
+	a[5] = TDL_Lang.T("Animal")
+	a[6] = TDL_Lang.T("Humanoid")
+	a[7] = TDL_Lang.T("Undead")
+	a[8] = TDL_Lang.T("Strong")
+	a[9] = TDL_Lang.T("Dragon")
+	a[10] = TDL_Lang.T("Disease")
+	a[11] = TDL_Lang.T("Scatter")
 	Return a
 EndFunction

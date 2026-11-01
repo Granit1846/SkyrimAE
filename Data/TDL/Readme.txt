@@ -1,4 +1,4 @@
-TDL - Twitch Dragonborn Legacy 1.1.7
+TDL - Twitch Dragonborn Legacy 1.1.8
 ====================================
 
 Your Twitch viewers control Skyrim: channel point rewards, bits, chat commands
@@ -16,6 +16,8 @@ Requirements
 - powerofthree's Papyrus Extender
 - ConsoleUtilSSE NG (a version that supports your game version)
 - SkyUI + MCM Helper (in-game settings menu)
+- UIExtensions (radial menu and stats menu)
+Multilingual out of the box: the mod follows your game language (9 languages), no translation files needed.
 Optional: True Directional Movement, TrueHUD, Target Focus (used by some stages).
 
 
@@ -104,7 +106,8 @@ Local control without Twitch (advanced)
 ---------------------------------------
 The plugin also listens on the named pipe \\.\pipe\TDL_Stream for lines like
   SYSTEM_PING|2     FORCE|SUMMON_SKELETON|3     FORCE1|SYSTEM_HEALING
-Data\TDL\tools\send_raw.cmd / send_raw.ps1 send such a line with PowerShell.
+Helper scripts send_raw.cmd / send_raw.ps1 (PowerShell) are in the GitHub repository
+(Data/TDL/tools); they are not needed to play.
 SOURCE: 1 = bits, 2 = points/chat, 3 = poll.
 
 

@@ -1,4 +1,4 @@
-TDL - Twitch Dragonborn Legacy 1.1.7
+TDL - Twitch Dragonborn Legacy 1.1.8
 ====================================
 
 Зрители вашего Twitch управляют Skyrim: награды за баллы канала, биты, команды
@@ -17,6 +17,8 @@ TDL - Twitch Dragonborn Legacy 1.1.7
 - powerofthree's Papyrus Extender
 - ConsoleUtilSSE NG (версия с поддержкой вашей версии игры)
 - SkyUI + MCM Helper (меню настроек в игре)
+- UIExtensions (радиальное меню и меню статистики)
+Мультиязычность «из коробки»: мод сам переключается на язык игры (9 языков), отдельные переводы не нужны.
 Необязательно: True Directional Movement, TrueHUD, Target Focus (нужны некоторым стадиям).
 
 
@@ -105,7 +107,8 @@ FORCE1|ACTION - одно действие сразу: SYSTEM_HEALING, WRATH_11/1
 ---------------------------------------
 Плагин также принимает строки через именованный канал \\.\pipe\TDL_Stream, например:
   SYSTEM_PING|2     FORCE|SUMMON_SKELETON|3     FORCE1|SYSTEM_HEALING
-Data\TDL\tools\send_raw.cmd / send_raw.ps1 отправляют такую строку через PowerShell.
+Скрипты send_raw.cmd / send_raw.ps1 (PowerShell) для этого лежат в репозитории на GitHub
+(Data/TDL/tools); для игры они не нужны.
 SOURCE: 1 = биты, 2 = баллы/чат, 3 = голосование.
 
 

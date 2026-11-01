@@ -23,6 +23,7 @@ This document is the single source of truth for installation and prerequisites.
 - powerofthree's Papyrus Extender
 - ConsoleUtilSSE NG (a build that supports your game version; used by the teleport respawn window)
 - SkyUI and MCM Helper (settings menu)
+- UIExtensions (radial menu and stats menu)
 
 ## Optional
 
@@ -33,7 +34,7 @@ This document is the single source of truth for installation and prerequisites.
 ## Install
 
 1. Install the archive with Vortex or MO2 and enable it (manual: copy the contents into `Skyrim Special Edition\Data\`).
-2. **Updating from 1.0.x:** delete `Data\TDL\tools\tdl_send.exe` if it is still there, remove the TDL actions from
+2. **Updating from 1.0.x:** delete the old `Data\TDL\tools` folder (with `tdl_send.exe`) if it is still there, remove the TDL actions from
    Streamer.bot and disable `TDL_RespawningEncounterZones.esp` / `Tdl_patch1.esp` (the respawn module is built in now).
 3. Check these files exist:
    - `Data\SKSE\Plugins\TDL_StreamPlugin.dll`
@@ -84,6 +85,7 @@ This document is the single source of truth for installation and prerequisites.
 - powerofthree's Papyrus Extender
 - ConsoleUtilSSE NG (сборка с поддержкой вашей версии игры; нужна окну респауна телепорта)
 - SkyUI и MCM Helper (меню настроек)
+- UIExtensions (радиальное меню и меню статистики)
 
 ## Необязательно
 
@@ -94,7 +96,7 @@ This document is the single source of truth for installation and prerequisites.
 ## Установка
 
 1. Установите архив через Vortex или MO2 и включите его (вручную: скопируйте содержимое в `Skyrim Special Edition\Data\`).
-2. **Обновление с 1.0.x:** удалите `Data\TDL\tools\tdl_send.exe`, если он остался, уберите действия TDL из
+2. **Обновление с 1.0.x:** удалите старую папку `Data\TDL\tools` (с `tdl_send.exe`), если она осталась, уберите действия TDL из
    Streamer.bot и выключите `TDL_RespawningEncounterZones.esp` / `Tdl_patch1.esp` (модуль респауна теперь встроен).
 3. Проверьте, что есть файлы:
    - `Data\SKSE\Plugins\TDL_StreamPlugin.dll`

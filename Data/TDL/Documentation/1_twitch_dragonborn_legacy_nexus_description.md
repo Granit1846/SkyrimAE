@@ -28,7 +28,7 @@ TDL is **not** a questline. It is a toolbox of staged scenarios built for live s
 - Smart queue: per-group cooldowns, priorities (bits > points/chat > polls), no effect spam
 - 46 actions in 11 modules: Wrath, Healing/Blessing, Summoning, Hunter, Show, Chaos, Inventory,
   Teleport (with a built-in fast-respawn window), Virus, Weather, Gigant
-- Full SkyUI MCM configuration, 9 languages
+- **Multilingual out of the box**: all texts (MCM, effects, names, messages, menus) follow your game language - 9 languages, no translation files needed
 
 ---
 
@@ -75,7 +75,7 @@ TDL - **не квест**. Это набор сценариев для стри�
 - Умная очередь: кулдауны по группам, приоритеты (биты > баллы/чат > голосования), без спама эффектами
 - 46 действий в 11 модулях: Кара, Лечение/Благословение, Призыв, Охотник, Шоу, Хаос, Инвентарь,
   Телепорт (со встроенным окном быстрого респауна), Вирус, Погода, Гигант
-- Полная настройка в SkyUI MCM, 9 языков
+- **Мультиязычность «из коробки»**: все тексты (MCM, эффекты, имена, сообщения, меню) следуют языку игры - 9 языков, отдельные переводы не нужны
 
 ---
 
