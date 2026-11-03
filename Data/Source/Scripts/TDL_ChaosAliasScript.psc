@@ -604,6 +604,10 @@ EndEvent
 Event OnPlayerLoadGame()
 	_RegisterFastTravel()
 	Quest q = GetOwningQuest()
+	TDL_MainController mc = q as TDL_MainController
+	If mc
+		mc.ShowWelcomeOnce()
+	EndIf
 	TDL_Comedy comedy = q as TDL_Comedy
 	If comedy
 		comedy.EndTransientOnLoad()

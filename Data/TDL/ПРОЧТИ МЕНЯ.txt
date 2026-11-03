@@ -7,6 +7,7 @@ TDL - Twitch Dragonborn Legacy 1.3.0-beta
 сторонних программ.
 
 Полная документация: Data\TDL\Documentation (английский + русский).
+Поддержать автора: https://boosty.to/skeorz
 Новое в 1.3 (бета): страница настроек в браузере (MCM -> About), Арена 2.0 - свой зал, гонг, сундук с наградой
 Новое в 1.2: оверлей для OBS, ответы в чат, пауза, анти-спам, статистика зрителей, рейды/сабы/hype train,
 голосования в чате, звуковой сигнал - см. Documentation\9_twitch_dragonborn_legacy_stream_features.md

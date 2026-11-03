@@ -16,6 +16,28 @@ Event OnInit()
         player.AddSpell(TDL_MenuPower)
         ; Debug.Notification("TDL Menu Power added")
     EndIf
+    ShowWelcomeOnce()
+EndEvent
+
+; Once per save: thanks + Boosty link. Waits until the player can move (not during the intro cart or a menu).
+Bool _welcomeShown = False
+
+Function ShowWelcomeOnce()
+    If !_welcomeShown
+        RegisterForSingleUpdate(10.0)
+    EndIf
+EndFunction
+
+Event OnUpdate()
+    If _welcomeShown
+        Return
+    EndIf
+    If !Game.IsMovementControlsEnabled() || Utility.IsInMenuMode()
+        RegisterForSingleUpdate(30.0)
+        Return
+    EndIf
+    _welcomeShown = True
+    Debug.MessageBox("$TDLWelcomeMessage")
 EndEvent
 
 ; =====================================================

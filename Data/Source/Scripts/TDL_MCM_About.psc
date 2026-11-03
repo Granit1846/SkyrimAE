@@ -17,6 +17,7 @@ Function BuildPage(SKI_ConfigBase mcm)
 	mcm.AddTextOption("$TDLAboutMCMVersion", "27")
 	mcm.AddTextOption("$TDLAboutActiveFunctions", "45")
 	mcm.AddTextOption("$TDLAboutAuthor", "Skeorz")
+	mcm.AddTextOption("$TDLAboutSupport", "boosty.to/skeorz")
 	OID_OpenSettings = mcm.AddTextOption("$TDLAboutOpenTwitchSettings", "$ActionOpen")
 
 	mcm.SetCursorPosition(1)

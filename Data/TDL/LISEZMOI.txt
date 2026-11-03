@@ -6,6 +6,7 @@ et sondages déclenchent dragons, chasseurs, malédictions, téléportations, m�
 Depuis la version 1.1, le mod se connecte à Twitch de manière autonome — pas besoin de Streamer.bot ni de programme supplémentaire.
 
 Documentation complète : Data\TDL\Documentation (anglais + russe).
+Soutenir l'auteur : https://boosty.to/skeorz
 Nouveau en 1.3 (bêta) : page de réglages dans le navigateur (MCM -> About), Arène 2.0 - salle dédiée, gong, coffre de récompense
 Nouveau en 1.2 : overlay OBS, réponses dans le chat, pause, anti-spam, statistiques, raids/abonnements/hype train,
 votes dans le chat, signal sonore - voir Documentation\9_twitch_dragonborn_legacy_stream_features.md
