@@ -1,4 +1,4 @@
-TDL - Twitch Dragonborn Legacy 1.2.0
+TDL - Twitch Dragonborn Legacy 1.2.1
 ====================================
 
 Your Twitch viewers control Skyrim: channel point rewards, bits, chat commands
@@ -6,6 +6,7 @@ and polls trigger dragons, hunters, curses, teleports, weather and more.
 Since 1.1 the mod connects to Twitch by itself - no Streamer.bot, no extra programs.
 
 Full documentation: Data\TDL\Documentation (English + Russian).
+Support the author: https://boosty.to/skeorz
 New in 1.2: OBS overlay, chat replies, pause, anti-spam, viewer stats, raid/sub/hype train events,
 chat voting, sound cue - see Documentation\9_twitch_dragonborn_legacy_stream_features.md
 

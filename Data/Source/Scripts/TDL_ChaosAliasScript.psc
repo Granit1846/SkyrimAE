@@ -560,6 +560,10 @@ EndEvent
 
 Event OnPlayerLoadGame()
 	_RegisterFastTravel()
+	TDL_MainController mc = GetOwningQuest() as TDL_MainController
+	If mc
+		mc.ShowWelcomeOnce()
+	EndIf
 	; Timed chaos uses real time, which restarts with the game; game settings are reset too, so end them cleanly
 	Actor p = Game.GetPlayer()
 	If _lowGActive

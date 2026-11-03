@@ -44,6 +44,10 @@ See `2_twitch_dragonborn_legacy_installation_and_requirements.md` (single source
 The mod ships **no executables**. Twitch is reached by the SKSE plugin over HTTPS (Twitch API / EventSub).
 The plugin is open source (GPL-3.0): https://github.com/Granit1846/SkyrimAE
 
+## Support the author
+
+If you enjoy the mod and want to say thanks: https://boosty.to/skeorz
+
 ---
 
 # Русская версия
@@ -91,3 +95,9 @@ TDL - **не квест**. Это набор сценариев для стри�
 
 В моде **нет исполняемых файлов**. С Twitch работает SKSE-плагин по HTTPS (Twitch API / EventSub).
 Исходный код плагина открыт (GPL-3.0): https://github.com/Granit1846/SkyrimAE
+
+---
+
+## Поддержать автора
+
+Если мод вам нравится и вы хотите поблагодарить автора: https://boosty.to/skeorz

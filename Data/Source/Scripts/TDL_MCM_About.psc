@@ -12,10 +12,11 @@ Function BuildPage(SKI_ConfigBase mcm)
 
 	mcm.SetCursorPosition(0)
 	mcm.AddHeaderOption("$TDLAboutHeader")
-	mcm.AddTextOption("$TDLAboutModVersion", "1.2.0")
+	mcm.AddTextOption("$TDLAboutModVersion", "1.2.1")
 	mcm.AddTextOption("$TDLAboutMCMVersion", "27")
 	mcm.AddTextOption("$TDLAboutActiveFunctions", "45")
 	mcm.AddTextOption("$TDLAboutAuthor", "Skeorz")
+	mcm.AddTextOption("$TDLAboutSupport", "boosty.to/skeorz")
 
 	mcm.SetCursorPosition(1)
 	mcm.AddHeaderOption("$TDLAboutQuickMenuHeader")
