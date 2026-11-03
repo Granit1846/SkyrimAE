@@ -445,18 +445,28 @@ int TDL_OverlayPort()
 	return result.ec == std::errc{} && result.ptr == p.data() + p.size() && port > 0 && port <= 65535 ? port : 8645;
 }
 
-bool TDL_OpenSettings()
+static void OpenInBrowser(std::wstring url)
 {
-	const int port = g_listeningPort.load();
-	if (!port) return false;
-	const auto url = L"http://127.0.0.1:" + std::to_wstring(port) + L"/settings";
 	// ASVS 1.4.3: capture the URL by value so the detached thread owns its data.
-	std::thread([url] {
+	std::thread([url = std::move(url)] {
 		const HRESULT com = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 		ShellExecuteW(nullptr, L"open", url.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 		if (SUCCEEDED(com)) CoUninitialize();
 	}).detach();
+}
+
+bool TDL_OpenSettings()
+{
+	const int port = g_listeningPort.load();
+	if (!port) return false;
+	OpenInBrowser(L"http://127.0.0.1:" + std::to_wstring(port) + L"/settings");
 	return true;
+}
+
+// Fixed URL on purpose: Papyrus can't pass an arbitrary address to ShellExecute.
+void TDL_OpenSupportPage()
+{
+	OpenInBrowser(L"https://boosty.to/skeorz");
 }
 
 void TDL_StartOverlay()

@@ -5,3 +5,4 @@
 void TDL_StartOverlay();
 int TDL_OverlayPort();
 bool TDL_OpenSettings();
+void TDL_OpenSupportPage();

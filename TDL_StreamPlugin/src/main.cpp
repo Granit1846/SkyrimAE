@@ -34,9 +34,15 @@ static bool OpenSettings(RE::StaticFunctionTag*)
 	return TDL_OpenSettings();
 }
 
+static void OpenSupportPage(RE::StaticFunctionTag*)
+{
+	TDL_OpenSupportPage();
+}
+
 static bool RegisterPapyrus(RE::BSScript::IVirtualMachine* vm)
 {
 	vm->RegisterFunction("OpenSettings", "TDL_Native", OpenSettings);
+	vm->RegisterFunction("OpenSupportPage", "TDL_Native", OpenSupportPage);
 	return true;
 }
 
