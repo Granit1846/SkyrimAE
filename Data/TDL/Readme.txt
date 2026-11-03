@@ -1,4 +1,4 @@
-TDL - Twitch Dragonborn Legacy 1.3.0-beta
+TDL - Twitch Dragonborn Legacy 1.3.1-beta
 =========================================
 
 Your Twitch viewers control Skyrim: channel point rewards, bits, chat commands

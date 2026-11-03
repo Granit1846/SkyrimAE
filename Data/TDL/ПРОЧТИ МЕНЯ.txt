@@ -1,4 +1,4 @@
-TDL - Twitch Dragonborn Legacy 1.3.0-beta
+TDL - Twitch Dragonborn Legacy 1.3.1-beta
 =========================================
 
 Зрители вашего Twitch управляют Skyrim: награды за баллы канала, биты, команды
