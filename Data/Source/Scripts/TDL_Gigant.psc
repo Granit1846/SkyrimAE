@@ -51,6 +51,11 @@ Float _speedEndTime = 0.0
 
 Bool _resetSize = false
 Bool _resetSpeed = false
+Float _originalScale = 1.0
+Float _originalDamage = 1.0
+Float _originalSpeed = 100.0
+Bool _fallAdded = false
+Bool _fallBorrowedFromLowG = false
 
 
 ; =====================================================
@@ -118,6 +123,12 @@ Function _HandleSizeStage(Int stage, Actor p)
 		dur = Gigant_SizeDurationGV.GetValue()
 	EndIf
 
+	If _sizeStage == 0 && _speedStage == 0
+		_originalScale = p.GetScale()
+		_originalDamage = p.GetActorValue("WeaponDamageMult")
+		_originalSpeed = p.GetActorValue("SpeedMult")
+	EndIf
+
 	If _sizeStage == stage
 		_sizeEndTime = now + dur
 		RegisterForSingleUpdate(0.5)
@@ -150,6 +161,12 @@ Function _HandleSpeedStage(Int stage, Actor p)
 	Float dur = 60.0
 	If Gigant_SpeedDurationGV
 		dur = Gigant_SpeedDurationGV.GetValue()
+	EndIf
+
+	If _sizeStage == 0 && _speedStage == 0
+		_originalScale = p.GetScale()
+		_originalDamage = p.GetActorValue("WeaponDamageMult")
+		_originalSpeed = p.GetActorValue("SpeedMult")
 	EndIf
 
 	If _speedStage == stage
@@ -198,8 +215,13 @@ Function _ApplyBig(Actor p)
 	p.SetScale(scale)
 	p.SetActorValue("WeaponDamageMult", dmgMult)
 
-	If NoFallingDamageAbility && !p.HasSpell(NoFallingDamageAbility)
-		p.AddSpell(NoFallingDamageAbility, false)
+	If NoFallingDamageAbility
+		If !p.HasSpell(NoFallingDamageAbility)
+			p.AddSpell(NoFallingDamageAbility, false)
+			_fallAdded = true
+		ElseIf _ChaosLowGActive()
+			_fallBorrowedFromLowG = true
+		EndIf
 	EndIf
 EndFunction
 
@@ -243,8 +265,13 @@ Function _ApplySpeed(Actor p)
 
 	p.SetActorValue("SpeedMult", speed)
 
-	If NoFallingDamageAbility && !p.HasSpell(NoFallingDamageAbility)
-		p.AddSpell(NoFallingDamageAbility, false)
+	If NoFallingDamageAbility
+		If !p.HasSpell(NoFallingDamageAbility)
+			p.AddSpell(NoFallingDamageAbility, false)
+			_fallAdded = true
+		ElseIf _ChaosLowGActive()
+			_fallBorrowedFromLowG = true
+		EndIf
 	EndIf
 EndFunction
 
@@ -270,21 +297,27 @@ EndFunction
 ; =====================================================
 Function _ApplyReset(Actor p)
 	If _resetSize
-		p.SetScale(1.0)
-		p.SetActorValue("WeaponDamageMult", 1.0)
+		p.SetScale(_originalScale)
+		p.SetActorValue("WeaponDamageMult", _originalDamage)
 		_sizeStage = 0
 		_sizeEndTime = 0.0
 	EndIf
 
 	If _resetSpeed
-		p.SetActorValue("SpeedMult", 100.0)
-		If NoFallingDamageAbility && p.HasSpell(NoFallingDamageAbility)
-			p.RemoveSpell(NoFallingDamageAbility)
-		EndIf
+		p.SetActorValue("SpeedMult", _originalSpeed)
 		_speedStage = 0
 		_speedEndTime = 0.0
 	EndIf
 
+	If (_fallAdded || _fallBorrowedFromLowG) && _sizeStage != 120 && _speedStage != 122
+		If !_ChaosLowGActive()
+			If NoFallingDamageAbility && p.HasSpell(NoFallingDamageAbility)
+				p.RemoveSpell(NoFallingDamageAbility)
+			EndIf
+			_fallAdded = false
+			_fallBorrowedFromLowG = false
+		EndIf
+	EndIf
 	_resetSize = false
 	_resetSpeed = false
 EndFunction
@@ -293,6 +326,30 @@ EndFunction
 ; =====================================================
 ; UPDATE LOOP
 ; =====================================================
+Bool Function _ChaosLowGActive()
+	TDL_MainControllerQuest controller = (Self as Quest) as TDL_MainControllerQuest
+	If controller
+		TDL_ChaosAliasScript chaosAlias = controller.Alias_TDL_ChaosAlias as TDL_ChaosAliasScript
+		If chaosAlias
+			Return chaosAlias.IsLowGActive()
+		EndIf
+	EndIf
+	Return false
+EndFunction
+
+Bool Function NeedsFallProtection()
+	Return _sizeStage == 120 || _speedStage == 122
+EndFunction
+
+Function EndTransientOnLoad()
+	Actor p = Game.GetPlayer()
+	If p
+		_resetSize = (_sizeStage != 0)
+		_resetSpeed = (_speedStage != 0)
+		_ApplyReset(p)
+	EndIf
+EndFunction
+
 Event OnUpdate()
 	Actor p = Game.GetPlayer()
 	Float now = Utility.GetCurrentRealTime()

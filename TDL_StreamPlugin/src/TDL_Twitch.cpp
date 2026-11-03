@@ -3,6 +3,7 @@
 // events mapped to TDL actions via TDL_Twitch.ini and queued through the existing scheduler.
 #include "TDL_Twitch.h"
 #include "TDL_PipeServer.h"
+#include "TDL_Overlay.h"
 
 // CommonLib headers must precede Windows.h (its macros break RE types)
 #ifndef TDL_TWITCH_HARNESS
@@ -12,6 +13,7 @@
 #endif
 
 #include <Windows.h>
+#include <objbase.h>
 #include <shellapi.h>
 #include <wincrypt.h>
 #include <winhttp.h>
@@ -1520,8 +1522,10 @@ namespace
 		}
 		const auto vars = std::vector<std::pair<std::string, std::string>>{ { "{rewards}", join(RawSectionKeys("rewards"), " | ") },
 			{ "{bits}", join(bits, ", ") }, { "{commands}", join(RawSectionKeys("chat"), " ") +
-				" !tdl raid <viewers> [name] / !tdl_raid (broadcaster/mods)" } };
-		ChatSay(Expand(IniValue("chatreplies", "Help"), vars));
+				" !tdl raid <viewers> [name] / !tdl_raid (broadcaster/mods) / !tdl settings (broadcaster)" } };
+		auto help = Expand(IniValue("chatreplies", "Help"), vars);
+		if (help.find("!tdl settings") == std::string::npos) help += " | !tdl settings (broadcaster)";
+		ChatSay(help);
 	}
 
 	// Twitch sends null (not a missing key) e.g. for anonymous cheers; json::value() would throw on that.
@@ -1626,6 +1630,15 @@ namespace
 			}
 			const auto cmd = LowerAscii(text.substr(0, text.find(' ')));
 			const auto privileged = IsPrivileged(ev);
+			if (LowerAscii(text) == "!tdl settings") {
+				bool broadcaster = false;
+				for (const auto& badge : ev.value("badges", json::array()))
+					if (badge.is_object() && badge.value("set_id", "") == "broadcaster") broadcaster = true;
+				if (broadcaster) {
+					if (TDL_OpenSettings()) ChatSay("Settings opened on the streamer PC");
+				}
+				return;
+			}
 			if (text.size() == 2 && text[1] >= '1' && text[1] <= '9') {
 				std::lock_guard lk(g_voteMtx);
 				if (g_vote && Clock::now() < g_vote->ends) ApplyVote(*g_vote, chatterId, text[1] - '1');

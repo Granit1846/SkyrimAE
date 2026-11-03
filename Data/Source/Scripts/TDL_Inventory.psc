@@ -111,6 +111,9 @@ Function ScatterOneItemType(Actor PlayerRef)
 	EndIf
 
 	Int total = Utility.RandomInt(MinCount, MaxCount)
+	If InvSpam_RollsGV && InvSpam_RollsGV.GetValueInt() > 0
+		total = InvSpam_RollsGV.GetValueInt()
+	EndIf
 
 	Int pick = Utility.RandomInt(0, InvSpamList.GetSize() - 1)
 	Form itemForm = InvSpamList.GetAt(pick)
@@ -200,6 +203,12 @@ EndFunction
 ; =========================
 ; UPDATE LOOP
 ; =========================
+Function EndTransientOnLoad()
+	If _dropActive
+		_FinishDrop(false)
+	EndIf
+EndFunction
+
 Event OnUpdate()
 	If !_dropActive
 		Return

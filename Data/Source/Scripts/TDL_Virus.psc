@@ -18,6 +18,7 @@ FormList Property VirusDiseaseList Auto
 Spell Property WerewolfChangeSpell Auto
 Race  Property WerewolfRace Auto
 GlobalVariable Property Virus_WerewolfDurationGV Auto
+GlobalVariable Property Virus_WerewolfDamageMultGV Auto
 
 ; ---------- Stage 102 — Vampire ----------
 Spell Property VampireLordChangeSpell Auto
@@ -26,6 +27,9 @@ Race  Property VampireLordRace Auto
 ; ---------- Internal ----------
 Bool  _wwActive = false
 Float _wwEndRT = 0.0
+Float _wwTransformUntilRT = 0.0
+Float _originalAttackDamage = 1.0
+Bool _wwDamageApplied = false
 
 
 ; =====================================================
@@ -127,8 +131,10 @@ Function _RunStage101(Actor p)
 		Return
 	EndIf
 
+	_originalAttackDamage = p.GetActorValue("AttackDamageMult")
 	WerewolfChangeSpell.Cast(p, p)
 	_wwActive = true
+	_wwTransformUntilRT = Utility.GetCurrentRealTime() + 10.0
 	_wwEndRT = Utility.GetCurrentRealTime() + dur
 
 	RegisterForSingleUpdate(1.0)
@@ -164,14 +170,22 @@ Event OnUpdate()
 
 	If _wwActive
 		If p.GetRace() != WerewolfRace
+			if Utility.GetCurrentRealTime() < _wwTransformUntilRT
+				RegisterForSingleUpdate(1.0)
+				Return
+			EndIf
+			_RestoreWerewolfDamage(p)
 			_wwActive = false
 			Return
 		EndIf
+		_wwTransformUntilRT = 0.0
+		_ApplyWerewolfDamage(p)
 
 		If Utility.GetCurrentRealTime() >= _wwEndRT
 			If WerewolfChangeSpell
 				p.DispelSpell(WerewolfChangeSpell)
 			EndIf
+			_RestoreWerewolfDamage(p)
 			_wwActive = false
 			Return
 		EndIf
@@ -184,7 +198,41 @@ EndEvent
 ; =====================================================
 ; RESET
 ; =====================================================
+Function _ApplyWerewolfDamage(Actor p)
+	If _wwDamageApplied
+		Return
+	EndIf
+	Float multiplier = 1.0
+	GlobalVariable damageGV = Virus_WerewolfDamageMultGV ; filled in CK (global TDL_Virus_WerewolfDamageMult)
+	If damageGV
+		multiplier = damageGV.GetValue()
+	EndIf
+	If multiplier < 0.0
+		multiplier = 0.0
+	EndIf
+	p.SetActorValue("AttackDamageMult", _originalAttackDamage * multiplier)
+	_wwDamageApplied = true
+EndFunction
+
+Function _RestoreWerewolfDamage(Actor p)
+	If _wwDamageApplied && p
+		p.SetActorValue("AttackDamageMult", _originalAttackDamage)
+	EndIf
+	_wwDamageApplied = false
+EndFunction
+
+Function EndTransientOnLoad()
+	Actor p = Game.GetPlayer()
+	If _wwActive && p && WerewolfChangeSpell
+		p.DispelSpell(WerewolfChangeSpell)
+	EndIf
+	_RestoreWerewolfDamage(p)
+	_wwActive = false
+	_wwEndRT = 0.0
+EndFunction
+
 Event OnReset()
+	_RestoreWerewolfDamage(Game.GetPlayer())
 	_wwActive = false
 	_wwEndRT = 0.0
 EndEvent

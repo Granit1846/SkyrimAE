@@ -136,6 +136,18 @@ String Function T(String en) Global
 		Return "Количество (предметы)"
 	ElseIf en == "Count (Disease)"
 		Return "Количество (болезнь)"
+	ElseIf en == "Arena unavailable during escort"
+		Return "Арена недоступна во время сопровождения"
+	ElseIf en == "Arena: strike the gong to begin ("
+		Return "Арена: ударьте в гонг, чтобы начать ("
+	ElseIf en == " s)"
+		Return " с)"
+	ElseIf en == "Victory! Take your reward from the chest"
+		Return "Победа! Заберите награду из сундука"
+	ElseIf en == "Arena: exit in "
+		Return "Арена: выход через "
+	ElseIf en == " s"
+		Return " с"
 	EndIf
 	Return en
 EndFunction

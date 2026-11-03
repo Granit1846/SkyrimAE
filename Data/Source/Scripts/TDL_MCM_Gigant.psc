@@ -120,24 +120,68 @@ EndFunction
 ; =========================
 Bool Function HandleSliderOpen(SKI_ConfigBase mcm, Int option)
 	If option == OID_ScaleBig || option == OID_ScaleSmall
+		If option == OID_ScaleBig
+			If Gigant_ScaleBigGV != None
+				mcm.SetSliderDialogStartValue(Gigant_ScaleBigGV.GetValue())
+			EndIf
+			mcm.SetSliderDialogDefaultValue(2.0)
+		ElseIf option == OID_ScaleSmall
+			If Gigant_ScaleSmallGV != None
+				mcm.SetSliderDialogStartValue(Gigant_ScaleSmallGV.GetValue())
+			EndIf
+			mcm.SetSliderDialogDefaultValue(0.33)
+		EndIf
 		mcm.SetSliderDialogRange(0.1, 5.0)
 		mcm.SetSliderDialogInterval(0.05)
 		Return True
 	EndIf
 
 	If option == OID_DmgBig || option == OID_DmgSmall
+		If option == OID_DmgBig
+			If Gigant_DamageBigGV != None
+				mcm.SetSliderDialogStartValue(Gigant_DamageBigGV.GetValue())
+			EndIf
+			mcm.SetSliderDialogDefaultValue(5.0)
+		ElseIf option == OID_DmgSmall
+			If Gigant_DamageSmallGV != None
+				mcm.SetSliderDialogStartValue(Gigant_DamageSmallGV.GetValue())
+			EndIf
+			mcm.SetSliderDialogDefaultValue(0.5)
+		EndIf
 		mcm.SetSliderDialogRange(0.0, 10.0)
 		mcm.SetSliderDialogInterval(0.1)
 		Return True
 	EndIf
 
 	If option == OID_SpeedFast || option == OID_SpeedSlow
+		If option == OID_SpeedFast
+			If Gigant_SpeedMultGV != None
+				mcm.SetSliderDialogStartValue(Gigant_SpeedMultGV.GetValue())
+			EndIf
+			mcm.SetSliderDialogDefaultValue(200.0)
+		ElseIf option == OID_SpeedSlow
+			If Gigant_SpeedSlowGV != None
+				mcm.SetSliderDialogStartValue(Gigant_SpeedSlowGV.GetValue())
+			EndIf
+			mcm.SetSliderDialogDefaultValue(50.0)
+		EndIf
 		mcm.SetSliderDialogRange(50.0, 300.0)
 		mcm.SetSliderDialogInterval(10.0)
 		Return True
 	EndIf
 
 	If option == OID_SizeDuration || option == OID_SpeedDuration
+		If option == OID_SizeDuration
+			If Gigant_SizeDurationGV != None
+				mcm.SetSliderDialogStartValue(Gigant_SizeDurationGV.GetValue())
+			EndIf
+			mcm.SetSliderDialogDefaultValue(60)
+		ElseIf option == OID_SpeedDuration
+			If Gigant_SpeedDurationGV != None
+				mcm.SetSliderDialogStartValue(Gigant_SpeedDurationGV.GetValue())
+			EndIf
+			mcm.SetSliderDialogDefaultValue(60)
+		EndIf
 		mcm.SetSliderDialogRange(5, 600)
 		mcm.SetSliderDialogInterval(5)
 		Return True

@@ -70,6 +70,25 @@ GlobalVariable Property ArenaSpawnRadius Auto
 GlobalVariable Property ArenaPerWave Auto
 GlobalVariable Property ArenaTimeoutMinutes Auto
 
+ObjectReference Property TDL_ArenaEntryMarker Auto
+ObjectReference Property TDL_ArenaCenterMarker Auto
+ObjectReference Property TDL_ArenaSpawn01 Auto
+ObjectReference Property TDL_ArenaSpawn02 Auto
+ObjectReference Property TDL_ArenaSpawn03 Auto
+ObjectReference Property TDL_ArenaSpawn04 Auto
+ObjectReference Property TDL_ArenaSpawn05 Auto
+ObjectReference Property TDL_ArenaSpawn06 Auto
+ObjectReference Property TDL_ArenaSpawn07 Auto
+ObjectReference Property TDL_ArenaSpawn08 Auto
+ObjectReference Property TDL_ArenaReturnMarker Auto
+ObjectReference Property TDL_ArenaGongRef Auto
+ObjectReference Property TDL_ArenaRewardChest Auto
+Message Property TDL_ArenaExitMessage Auto
+GlobalVariable Property TDL_ArenaPrepSeconds Auto
+GlobalVariable Property TDL_ArenaReturnDelay Auto
+GlobalVariable Property TDL_ArenaChestTimeout Auto
+Cell Property TDLArenaCell Auto
+
 Message Property ArenaRewardMessage_Normal Auto
 Message Property ArenaRewardMessage_Final Auto
 Message Property TDL_ArenaTimeoutPenaltyMsg Auto
@@ -81,7 +100,13 @@ FormList Property TDL_EnemyHard Auto
 Spell Property TDL_ArenaPenaltySpellTest Auto
 
 Bool _stage52Active = false
-Int _arenaState = 0 ; 1=wave, 2=wait
+Bool _arenaExitInProgress = false
+Int _arenaState = 0 ; 10=prep, 1=wave, 2=wait, 20=chest, 30=exit countdown
+Bool _arenaDedicated = false
+Float _arenaPrepAt = 0.0
+Float _arenaChestAt = 0.0
+Float _arenaExitAt = 0.0
+Int _arenaSpawnStart = 0
 Int _arenaCurrentWave = 0
 Float _arenaStateTime = 0.0
 
@@ -89,6 +114,7 @@ Actor[] _arenaWaveEnemies
 Int _arenaWaveCount = 0
 
 Actor[] _arenaAllEnemies
+Actor[] _arenaAllEnemiesExtra
 Int _arenaAllCount = 0
 
 Bool _arenaCleanupPending = false
@@ -110,8 +136,10 @@ ActorBase Property EscortBanditBase Auto ; EncBandit02Boss2HNordM (0003DEE4)
 Actor[] _escortBandits
 Int _escortBanditCount = 0
 Bool _escortBanditLoopActive = false
+Float _escortNextBanditAt = 0.0
 
 Bool _stage53Active = false
+Bool _escortCleanupPending = false
 
 Actor _escortActor
 Float _escortEndTime = 0.0
@@ -247,6 +275,9 @@ EndFunction
 ; ======================= STAGE 51 =====================
 ; =====================================================
 Bool Function _StartStage51(Actor p)
+	If _horrorHunter && !_stage51Active
+		Return False
+	EndIf
 	If _stage51Active && _horrorHunter
 		Float dur = 120.0
 		If HorrorDuration
@@ -295,7 +326,7 @@ Function _UpdateHorrorMusic()
     Float now = Utility.GetCurrentRealTime()
     
     ; Если музыкальный период еще не истек
-    If now < (_stage51EndTime - _musicTotalDuration)
+    If now < _stage51EndTime
         ; Если пришло время для следующего воспроизведения
         If now >= _nextMusicTime
             _RemoveHorrorMusic()  ; Сначала остановить текущую
@@ -382,13 +413,15 @@ Function _EndStage51()
 	_activeHorrorIMOD = None
 	_lastWasInterior = false
 
-	If _horrorHunter
+	_stage51Active = false
+	If _horrorHunter && (_horrorHunter.IsDead() || !_horrorHunter.IsInCombat())
 		_horrorHunter.Disable()
 		_horrorHunter.Delete()
+		_horrorHunter = None
 	EndIf
-
-	_horrorHunter = None
-	_stage51Active = false
+	If _horrorHunter
+		RegisterForSingleUpdate(5.0)
+	EndIf
 EndFunction
 
 Function _PositionHorrorHunter(Actor p, Float dist)
@@ -412,6 +445,10 @@ Bool Function _StartStage52(Actor p)
 	If _stage52Active
 		Return False
 	EndIf
+	If _stage53Active
+		Debug.Notification(TDL_Lang.T("Arena unavailable during escort"))
+		Return False
+	EndIf
 
 	If !p
 		Return False
@@ -420,9 +457,13 @@ Bool Function _StartStage52(Actor p)
 	; Safety: если прошлый забег завис/не дочистился — принудительно чистим
 	If _arenaAllCount > 0
 		_CleanupArenaAll()
+		If _arenaAllCount > 0
+			Return False
+		EndIf
 	EndIf
 
 	_stage52Active = true
+	_arenaDedicated = _ArenaReady()
 	_arenaState = 1
 	_arenaCurrentWave = 1
 	_arenaStateTime = 0.0
@@ -431,6 +472,7 @@ Bool Function _StartStage52(Actor p)
 	_arenaWaveCount = 0
 
 	_arenaAllEnemies = new Actor[128]
+	_arenaAllEnemiesExtra = new Actor[72]
 	_arenaAllCount = 0
 
 	_arenaCleanupPending = false
@@ -452,6 +494,24 @@ Bool Function _StartStage52(Actor p)
 	EndIf
 
 	_arenaTimeoutAt = now + (tmin * 60.0)
+	If _arenaDedicated
+		TDL_ArenaRewardChest.Disable()
+		TDL_ArenaRewardChest.RemoveAllItems()
+		TDL_ArenaReturnMarker.MoveTo(p)
+		p.MoveTo(TDL_ArenaEntryMarker)
+		_arenaState = 10
+		Float prep = 30.0
+		If TDL_ArenaPrepSeconds
+			prep = TDL_ArenaPrepSeconds.GetValue()
+		EndIf
+		If prep < 0.0
+			prep = 0.0
+		EndIf
+		_arenaPrepAt = now + prep
+		Debug.Notification(TDL_Lang.T("Arena: strike the gong to begin (") + (prep as Int) + TDL_Lang.T(" s)"))
+		RegisterForSingleUpdate(0.5)
+		Return True
+	EndIf
 
 	_SpawnArenaWave(p, 1)
 
@@ -474,6 +534,34 @@ Function _UpdateStage52()
 	EndIf
 
 	Float now = Utility.GetCurrentRealTime()
+	If _arenaDedicated && p.GetParentCell() != TDLArenaCell
+		_CleanupArenaAll(True)
+		TDL_ArenaRewardChest.Disable()
+		_FinalizeStage52()
+		Return
+	EndIf
+	If _arenaState == 10 && _arenaTimeoutAt > 0.0 && now >= _arenaTimeoutAt
+		_HandleArenaTimeout()
+		Return
+	EndIf
+	If _arenaState == 10
+		If now >= _arenaPrepAt
+			ArenaStartRequested()
+		EndIf
+		Return
+	EndIf
+	If _arenaState == 20
+		If now >= _arenaChestAt
+			_ArenaBeginExitCountdown(True)
+		EndIf
+		Return
+	EndIf
+	If _arenaState == 30
+		If now >= _arenaExitAt
+			_ArenaExit()
+		EndIf
+		Return
+	EndIf
 
 	; Таймаут: жёсткая очистка и сброс Stage 52 (без penalty/MessageBox)
 	If _arenaTimeoutAt > 0.0 && now >= _arenaTimeoutAt
@@ -495,6 +583,23 @@ Function _UpdateStage52()
 		EndIf
 
 		If _arenaCurrentWave >= maxW
+			If _arenaDedicated
+				_GiveArenaReward_Final(TDL_ArenaRewardChest)
+				TDL_ArenaRewardChest.Enable()
+				Debug.Notification(TDL_Lang.T("Victory! Take your reward from the chest"))
+				_arenaState = 20
+				Float chestWait = 120.0
+				If TDL_ArenaChestTimeout
+					chestWait = TDL_ArenaChestTimeout.GetValue()
+				EndIf
+				If chestWait < 0.0
+					chestWait = 0.0
+				EndIf
+				_arenaChestAt = now + chestWait
+				_arenaCleanupPending = true
+				_arenaCorpseCleanupAt = now + 60.0
+				Return
+			EndIf
 			_GiveArenaReward_Final(p)
 			_ShowArenaRewardMessage_Final()
 
@@ -505,8 +610,12 @@ Function _UpdateStage52()
 			_FinalizeStage52()
 			Return
 		Else
-			_GiveArenaReward_Normal(p)
-			_ShowArenaRewardMessage_Normal()
+			If _arenaDedicated
+				_GiveArenaReward_Normal(TDL_ArenaRewardChest)
+			Else
+				_GiveArenaReward_Normal(p)
+				_ShowArenaRewardMessage_Normal()
+			EndIf
 
 			_arenaState = 2
 			_arenaStateTime = now
@@ -577,12 +686,23 @@ Function _SpawnArenaWave(Actor p, Int wave)
 	EndIf
 
 	Int i = 0
+	If _arenaDedicated
+		_arenaSpawnStart = Utility.RandomInt(0, 7)
+	EndIf
 	While i < cnt
 		ActorBase ab = lst.GetAt(Utility.RandomInt(0, lst.GetSize() - 1)) as ActorBase
 		If ab
-			Actor a = p.PlaceAtMe(ab, 1) as Actor
+			Actor a = None
+			If _arenaDedicated
+				ObjectReference marker = _ArenaSpawnMarker((_arenaSpawnStart + i) % 8)
+				a = marker.PlaceAtMe(ab, 1) as Actor
+			Else
+				a = p.PlaceAtMe(ab, 1) as Actor
+			EndIf
 			If a
-				a.MoveTo(p, Utility.RandomFloat(-r, r), Utility.RandomFloat(-r, r), 0)
+				If !_arenaDedicated
+					a.MoveTo(p, Utility.RandomFloat(-r, r), Utility.RandomFloat(-r, r), 0)
+				EndIf
 				a.StartCombat(p)
 
 				If _arenaWaveCount < 32
@@ -592,26 +712,111 @@ Function _SpawnArenaWave(Actor p, Int wave)
 
 				If _arenaAllCount < 128
 					_arenaAllEnemies[_arenaAllCount] = a
-					_arenaAllCount += 1
+				ElseIf _arenaAllCount < 200
+					_arenaAllEnemiesExtra[_arenaAllCount - 128] = a
 				EndIf
+				_arenaAllCount += 1
 			EndIf
 		EndIf
 		i += 1
 	EndWhile
 EndFunction
 
-Function _GiveArenaReward_Normal(Actor p)
-	p.AddItem(Game.GetFormFromFile(0x00039BE5, "Skyrim.esm"), 1, True)
-	p.AddItem(Game.GetFormFromFile(0x00039BE7, "Skyrim.esm"), 1, True)
-	p.AddItem(Game.GetFormFromFile(0x00039CF3, "Skyrim.esm"), 1, True)
-	p.AddItem(Game.GetFormFromFile(0x0000000F, "Skyrim.esm"), 750, True)
+Function EndTransientOnLoad()
+	If _stage50Active
+		_EndStage50()
+	EndIf
+	Float now = Utility.GetCurrentRealTime()
+	If _stage51Active
+		Float dur = 120.0
+		If HorrorDuration
+			dur = HorrorDuration.GetValue()
+		EndIf
+		_stage51EndTime = now + dur
+		_nextMusicTime = now + _musicInterval
+	EndIf
+	If _stage52Active && _arenaDedicated && Game.GetPlayer().GetParentCell() != TDLArenaCell
+		_CleanupArenaAll(True)
+		TDL_ArenaRewardChest.Disable()
+		_FinalizeStage52()
+	ElseIf _stage52Active
+		Float timeoutMin = 1.0
+		If ArenaTimeoutMinutes
+			timeoutMin = ArenaTimeoutMinutes.GetValue()
+		EndIf
+		If timeoutMin < 1.0
+			timeoutMin = 1.0
+		EndIf
+		_arenaTimeoutAt = now + timeoutMin * 60.0
+		_arenaStateTime = now
+		If _arenaDedicated
+			If _arenaState == 10
+				Float prep = 30.0
+				If TDL_ArenaPrepSeconds
+					prep = TDL_ArenaPrepSeconds.GetValue()
+				EndIf
+				_arenaPrepAt = now + prep
+			ElseIf _arenaState == 20
+				Float chestWait = 120.0
+				If TDL_ArenaChestTimeout
+					chestWait = TDL_ArenaChestTimeout.GetValue()
+				EndIf
+				_arenaChestAt = now + chestWait
+			ElseIf _arenaState == 30
+				Float returnWait = 10.0
+				If TDL_ArenaReturnDelay
+					returnWait = TDL_ArenaReturnDelay.GetValue()
+				EndIf
+				_arenaExitAt = now + returnWait
+			EndIf
+		EndIf
+	EndIf
+	If _arenaCleanupPending
+		_arenaCorpseCleanupAt = now + 5.0
+	EndIf
+	If _stage53Active
+		Float escortDur = 120.0
+		If EscortDuration
+			escortDur = EscortDuration.GetValue()
+		EndIf
+		_escortEndTime = now + escortDur
+		_escortIgnoreSince = 0.0
+		_escortNextBanditAt = now + 35.0
+	EndIf
+	If _stage51Active || _stage52Active || _stage53Active || _arenaCleanupPending || _escortCleanupPending || _horrorHunter
+		RegisterForSingleUpdate(0.5)
+	EndIf
+	If _escortChest
+		_escortChest.Disable()
+		_escortChest.Delete()
+		_escortChest = None
+	EndIf
 EndFunction
 
-Function _GiveArenaReward_Final(Actor p)
+; Gold scales with player level: x0.5 up to level 10, then x(0.5 + level/20), max x4
+Int Function _ArenaGold(Int base)
+	Int lvl = Game.GetPlayer().GetLevel()
+	Float mult = 0.5 + (lvl as Float) / 20.0
+	If lvl <= 10
+		mult = 0.5
+	ElseIf mult > 4.0
+		mult = 4.0
+	EndIf
+	Return (base * mult) as Int
+EndFunction
+
+Function _GiveArenaReward_Normal(ObjectReference p)
 	p.AddItem(Game.GetFormFromFile(0x00039BE5, "Skyrim.esm"), 1, True)
 	p.AddItem(Game.GetFormFromFile(0x00039BE7, "Skyrim.esm"), 1, True)
 	p.AddItem(Game.GetFormFromFile(0x00039CF3, "Skyrim.esm"), 1, True)
-	p.AddItem(Game.GetFormFromFile(0x0000000F, "Skyrim.esm"), 1500, True)
+	p.AddItem(Game.GetFormFromFile(0x0000000F, "Skyrim.esm"), _ArenaGold(750), True)
+EndFunction
+
+Function _GiveArenaReward_Final(ObjectReference p)
+	p.AddItem(Game.GetFormFromFile(0x00039BE5, "Skyrim.esm"), 1, True)
+	p.AddItem(Game.GetFormFromFile(0x00039BE7, "Skyrim.esm"), 1, True)
+	p.AddItem(Game.GetFormFromFile(0x00039CF3, "Skyrim.esm"), 1, True)
+	p.AddItem(Game.GetFormFromFile(0x0000000F, "Skyrim.esm"), _ArenaGold(1500), True)
 EndFunction
 
 Function _ShowArenaRewardMessage_Normal()
@@ -641,47 +846,58 @@ Function _FinalizeStage52()
 	_stage52Active = false
 	_arenaState = 0
 	_arenaCurrentWave = 0
+	_arenaDedicated = false
+	_arenaTimeoutAt = 0.0
 EndFunction
 
 Function _CleanupArenaCorpses()
-	Int i = 0
-	While i < _arenaAllCount
-		Actor a = _arenaAllEnemies[i]
-		If a
-			a.Disable()
-			a.Delete()
-		EndIf
-		i += 1
-	EndWhile
-
-	_arenaAllCount = 0
-	_arenaWaveCount = 0
-	_arenaCleanupPending = false
-	_arenaCorpseCleanupAt = 0.0
+	_CleanupArenaAll()
 EndFunction
 
-Function _CleanupArenaAll()
+Function _CleanupArenaAll(Bool force = False)
+	Bool waiting = false
 	Int i = 0
 	While i < _arenaAllCount
-		Actor a = _arenaAllEnemies[i]
+		Actor a = None
+		If i < 128
+			a = _arenaAllEnemies[i]
+		Else
+			a = _arenaAllEnemiesExtra[i - 128]
+		EndIf
 		If a
-			a.Disable()
-			a.Delete()
+			If !force && !a.IsDead() && a.IsInCombat()
+				waiting = true
+			Else
+				a.Disable()
+				a.Delete()
+				If i < 128
+					_arenaAllEnemies[i] = None
+				Else
+					_arenaAllEnemiesExtra[i - 128] = None
+				EndIf
+			EndIf
 		EndIf
 		i += 1
 	EndWhile
-
-	_arenaAllCount = 0
-	_arenaWaveCount = 0
-	_arenaCleanupPending = false
-	_arenaCorpseCleanupAt = 0.0
+	_arenaCleanupPending = waiting
+	If waiting
+		RegisterForSingleUpdate(5.0)
+		_arenaCorpseCleanupAt = Utility.GetCurrentRealTime() + 5.0
+	Else
+		_arenaAllCount = 0
+		_arenaWaveCount = 0
+		_arenaCorpseCleanupAt = 0.0
+	EndIf
 EndFunction
 
 Function _HandleArenaTimeout()
 	; жёсткая очистка (живые + трупы) и сброс Stage 52 (без penalty/MessageBox)
-	_CleanupArenaAll()
+	Bool dedicated = _arenaDedicated
+	_CleanupArenaAll(dedicated)
 	_FinalizeStage52()
-	_arenaTimeoutAt = 0.0
+	If dedicated && TDL_ArenaRewardChest
+		TDL_ArenaRewardChest.Disable()
+	EndIf
 	
 	If TDL_ArenaTimeoutPenaltyMsg
 		TDL_ArenaTimeoutPenaltyMsg.Show()
@@ -690,11 +906,91 @@ Function _HandleArenaTimeout()
 	If TDL_ArenaPenaltySpellTest 
 		TDL_ArenaPenaltySpellTest.Cast(PlayerRef, PlayerRef)
 	EndIf
+	If dedicated && TDL_ArenaReturnMarker
+		Game.GetPlayer().MoveTo(TDL_ArenaReturnMarker)
+	EndIf
 EndFunction
 
 
 
 ; =====================================================
+Bool Function _ArenaReady()
+	Return TDL_ArenaEntryMarker && TDL_ArenaCenterMarker && TDL_ArenaSpawn01 && TDL_ArenaSpawn02 && TDL_ArenaSpawn03 && TDL_ArenaSpawn04 && TDL_ArenaSpawn05 && TDL_ArenaSpawn06 && TDL_ArenaSpawn07 && TDL_ArenaSpawn08 && TDL_ArenaReturnMarker && TDL_ArenaGongRef && TDL_ArenaRewardChest && TDL_ArenaExitMessage && TDLArenaCell
+EndFunction
+
+ObjectReference Function _ArenaSpawnMarker(Int index)
+	If index == 0
+		Return TDL_ArenaSpawn01
+	ElseIf index == 1
+		Return TDL_ArenaSpawn02
+	ElseIf index == 2
+		Return TDL_ArenaSpawn03
+	ElseIf index == 3
+		Return TDL_ArenaSpawn04
+	ElseIf index == 4
+		Return TDL_ArenaSpawn05
+	ElseIf index == 5
+		Return TDL_ArenaSpawn06
+	ElseIf index == 6
+		Return TDL_ArenaSpawn07
+	EndIf
+	Return TDL_ArenaSpawn08
+EndFunction
+
+Function ArenaStartRequested()
+	; ASVS 2.3.1: only the active preparation state may start a wave.
+	If !_stage52Active || !_arenaDedicated || _arenaState != 10
+		Return
+	EndIf
+	_arenaState = 1
+	_SpawnArenaWave(Game.GetPlayer(), 1)
+	If _arenaWaveCount <= 0
+		_HandleArenaTimeout()
+	EndIf
+EndFunction
+
+Function ArenaChestClosed()
+	If _stage52Active && _arenaDedicated && _arenaState == 20
+		_ArenaBeginExitCountdown(False)
+	EndIf
+EndFunction
+
+Function _ArenaBeginExitCountdown(Bool immediate)
+	_arenaState = 30
+	Float delay = 10.0
+	If TDL_ArenaReturnDelay
+		delay = TDL_ArenaReturnDelay.GetValue()
+	EndIf
+	If immediate || delay < 0.0
+		delay = 0.0
+	EndIf
+	_arenaExitAt = Utility.GetCurrentRealTime() + delay
+	Debug.Notification(TDL_Lang.T("Arena: exit in ") + (delay as Int) + TDL_Lang.T(" s"))
+EndFunction
+
+Function _ArenaExit()
+	If _arenaExitInProgress
+		Return
+	EndIf
+	_arenaExitInProgress = true
+	Int choice = TDL_ArenaExitMessage.Show()
+	TDL_ArenaRewardChest.Disable()
+	_CleanupArenaAll(True)
+	_FinalizeStage52()
+	Actor p = Game.GetPlayer()
+	Bool moved = False
+	Quest q = Self as Quest
+	TDL_Teleport tp = q as TDL_Teleport
+	If tp && choice == 0
+		moved = tp.RunStage(90, p)
+	ElseIf tp && choice == 2
+		moved = tp.RunStage(92, p)
+	EndIf
+	If !moved
+		p.MoveTo(TDL_ArenaReturnMarker)
+	EndIf
+	_arenaExitInProgress = false
+EndFunction
 ; ======================= STAGE 53 =====================
 ; =====================================================
 Bool Function _StartStage53(Actor p)
@@ -707,6 +1003,9 @@ Bool Function _StartStage53(Actor p)
 		Return False
 	EndIf
 
+	If _escortCleanupPending
+		Return False
+	EndIf
 	_CleanupStage53_Internal()
 
 	ActorBase ab = EscortAnimals.GetAt(Utility.RandomInt(0, EscortAnimals.GetSize() - 1)) as ActorBase
@@ -746,20 +1045,8 @@ Bool Function _StartStage53(Actor p)
 	_escortBanditLoopActive = true
 	_escortBandits = new Actor[128]
 	_escortBanditCount = 0
-	_StartEscortBanditLoop()
+	_escortNextBanditAt = Utility.GetCurrentRealTime() + 35.0
 	Return True
-EndFunction
-
-Function _StartEscortBanditLoop()
-	While _escortBanditLoopActive && _stage53Active && _escortActor
-		Utility.Wait(35.0)
-
-		If !_escortBanditLoopActive || !_stage53Active || !_escortActor
-			Return
-		EndIf
-
-		_SpawnEscortBandit()
-	EndWhile
 EndFunction
 
 Function _SpawnEscortBandit()
@@ -878,28 +1165,40 @@ Function _CleanupStage53_Internal()
 		EscortTargetAlias.Clear()
 	EndIf
 
+	_escortCleanupPending = false
 	If _escortActor
-		_escortActor.Disable()
-		_escortActor.Delete()
+		If _escortActor.IsDead() || !_escortActor.IsInCombat()
+			_escortActor.Disable()
+			_escortActor.Delete()
+			_escortActor = None
+		Else
+			_escortCleanupPending = true
+		EndIf
 	EndIf
 
 	_escortBanditLoopActive = false
+	_escortNextBanditAt = 0.0
 
 	If _escortBandits
 		Int i = 0
 		While i < _escortBanditCount
 			Actor a = _escortBandits[i]
 			If a
-				a.Disable()
-				a.Delete()
+				If a.IsDead() || !a.IsInCombat()
+					a.Disable()
+					a.Delete()
+					_escortBandits[i] = None
+				Else
+					_escortCleanupPending = true
+				EndIf
 			EndIf
 			i += 1
 		EndWhile
 	EndIf
 
-	_escortBanditCount = 0
-
-	_escortActor = None
+	If !_escortCleanupPending
+		_escortBanditCount = 0
+	EndIf
 	_stage53Active = false
 	_escortIgnoreSince = 0.0
 	_escortEndTime = 0.0
@@ -928,6 +1227,18 @@ Event OnUpdate()
 
 	If _stage53Active
 		_UpdateStage53()
+		If _stage53Active && _escortBanditLoopActive && Utility.GetCurrentRealTime() >= _escortNextBanditAt
+			_escortNextBanditAt = Utility.GetCurrentRealTime() + 35.0
+			_SpawnEscortBandit()
+		EndIf
+	EndIf
+
+	If !_stage51Active && _horrorHunter
+		_EndStage51()
+	EndIf
+
+	If _escortCleanupPending
+		_CleanupStage53_Internal()
 	EndIf
 
 	If _arenaCleanupPending && Utility.GetCurrentRealTime() >= _arenaCorpseCleanupAt
@@ -941,7 +1252,7 @@ Event OnUpdate()
 		EndIf
 	EndIf
 
-	If _stage50Active || _stage51Active || _stage52Active || _stage53Active || _arenaCleanupPending
+	If _stage50Active || _stage51Active || _stage52Active || _stage53Active || _arenaCleanupPending || _escortCleanupPending || _horrorHunter
 		RegisterForSingleUpdate(0.5)
 	EndIf
 EndEvent

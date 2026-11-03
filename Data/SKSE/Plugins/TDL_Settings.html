@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TDL Settings</title>
+<style>
+  :root { color-scheme: dark; --bg:#0b0b0f; --panel:#141319; --raised:#1d1b22; --line:#453b2b; --gold:#d8b46a; --text:#e6e6e6; --muted:#aaa7a3; --bad:#e58e83; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; }
+  button,input,select,textarea { font:inherit; }
+  button { cursor:pointer; }
+  :focus-visible { outline:2px solid var(--gold); outline-offset:2px; }
+  .shell { max-width:1280px; margin:auto; padding:26px 28px 100px; }
+  header { display:flex; align-items:end; justify-content:space-between; gap:20px; border-bottom:1px solid var(--line); padding-bottom:19px; }
+  h1 { margin:0; color:var(--gold); font:normal 38px/1.05 Georgia,serif; letter-spacing:.02em; }
+  .subtitle { color:var(--muted); margin:6px 0 0; }
+  .status { color:var(--muted); min-height:22px; text-align:right; }
+  .status.dirty { color:var(--gold); }
+  nav { display:flex; gap:4px; overflow-x:auto; padding:16px 0; border-bottom:1px solid var(--line); }
+  nav button { flex:none; background:transparent; border:0; border-bottom:2px solid transparent; color:var(--muted); padding:9px 13px; white-space:nowrap; }
+  nav button[aria-selected="true"] { color:var(--gold); border-color:var(--gold); }
+  main { padding-top:22px; }
+  h2 { margin:0 0 14px; font:normal 23px Georgia,serif; color:var(--gold); }
+  h3 { margin:0 0 12px; font-size:15px; font-weight:600; }
+  .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:19px; min-width:0; }
+  .card.wide { grid-column:1/-1; }
+  .field { display:grid; grid-template-columns:minmax(150px,1fr) minmax(150px,1.6fr); gap:12px; align-items:center; margin:10px 0; }
+  .field > label,.field > span:first-child { color:var(--text); }
+  .hint { color:var(--muted); font-size:12px; margin:4px 0 10px; }
+  .field .hint,.check .hint { display:block; margin:2px 0 0; }
+  input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea { width:100%; min-width:0; color:var(--text); background:var(--raised); border:1px solid #5a5040; border-radius:5px; padding:8px 10px; }
+  input:disabled { opacity:.65; }
+  textarea { resize:vertical; min-height:38px; }
+  input[type=checkbox],input[type=radio] { accent-color:var(--gold); width:16px; height:16px; vertical-align:middle; }
+  input[type=range] { width:100%; accent-color:var(--gold); }
+  .check { display:flex; align-items:start; gap:8px; }
+  .inline { display:flex; gap:15px; flex-wrap:wrap; align-items:center; }
+  .row { display:grid; grid-template-columns:minmax(120px,1fr) minmax(180px,2fr) auto; gap:8px; align-items:start; margin:8px 0; }
+  .row.four { grid-template-columns:minmax(120px,1fr) minmax(180px,2fr) minmax(90px,.5fr) auto; }
+  .row.two { grid-template-columns:minmax(140px,1fr) minmax(120px,1fr) auto; }
+  .row-head { color:var(--muted); font-size:12px; margin:0 0 6px; }
+  .action-editor { display:flex; gap:6px; align-items:start; min-width:0; }
+  .action-editor select { width:auto; max-width:100%; }
+  .action-editor .action-main { flex:1; min-width:0; }
+  .action-editor input[type=number] { width:72px !important; }
+  .action-editor textarea { min-width:150px; }
+  .action-editor .multi { display:flex; gap:6px; flex-wrap:wrap; flex:1; }
+  .action-editor .multi select { min-width:155px; }
+  .action-editor .mini { padding:5px 9px; }
+  .pick-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:4px 16px; }
+  .pick-group { margin:0 0 8px; min-width:0; }
+  .pick-group summary { color:var(--gold); cursor:pointer; }
+  .pick-group .checks { padding:6px 0 7px 14px; display:grid; gap:4px; }
+  .pick-group label { display:flex; gap:7px; align-items:start; overflow-wrap:anywhere; }
+  .quiet,.mini { color:var(--gold); background:transparent; border:1px solid var(--line); border-radius:5px; padding:7px 11px; }
+  .mini { padding:7px 10px; }
+  .quiet:hover,.mini:hover { background:#2a241c; }
+  .danger { color:var(--bad); }
+  .tier { border-top:1px solid var(--line); padding:13px 0; }
+  .tier:first-child { border-top:0; }
+  .tier-top { display:grid; grid-template-columns:minmax(210px,auto) 1fr auto; gap:8px; align-items:start; }
+  .tier-threshold { display:flex; align-items:center; gap:6px; white-space:nowrap; }
+  .tier-threshold input { width:70px !important; min-width:64px !important; }
+  .part { display:grid; grid-template-columns:minmax(130px,1fr) minmax(150px,2fr) minmax(250px,2fr) auto; gap:7px; margin:8px 0 8px 98px; align-items:start; }
+  .part-count { display:flex; gap:5px; align-items:center; flex-wrap:wrap; }
+  .part-count select { width:auto; max-width:100%; min-width:0; }
+  .part-count label { display:flex; gap:4px; align-items:center; white-space:nowrap; }
+  .part-count input { width:64px !important; min-width:64px !important; }
+  .tier-preview { margin:0; line-height:1.6; }
+  details.text-group { border:1px solid var(--line); background:var(--panel); border-radius:8px; margin:0 0 12px; padding:12px 18px; }
+  details.text-group summary { cursor:pointer; color:var(--gold); font:normal 21px Georgia,serif; }
+  .advanced-section { margin-bottom:14px; }
+  .toolbar { position:fixed; bottom:0; left:0; right:0; background:rgba(11,11,15,.97); border-top:1px solid var(--line); padding:12px 28px; display:flex; justify-content:flex-end; gap:9px; z-index:10; }
+  .primary { background:var(--gold); color:#16120d; border:1px solid var(--gold); border-radius:5px; padding:8px 16px; font-weight:700; }
+  .primary:disabled { opacity:.5; cursor:default; }
+  #toast { position:fixed; right:28px; bottom:74px; background:#28231d; color:var(--text); border:1px solid var(--gold); border-radius:6px; padding:11px 15px; max-width:460px; z-index:20; box-shadow:0 8px 30px #0009; }
+  #toast[hidden] { display:none; }
+  @media(max-width:950px) { .shell { padding:20px 16px 92px; } .grid { grid-template-columns:1fr; } .pick-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+  @media(max-width:650px) { header { display:block; } .status { text-align:left; margin-top:10px; } .field { grid-template-columns:1fr; gap:3px; } .row,.row.four,.row.two,.tier-top,.part { grid-template-columns:1fr; } .part { margin-left:18px; border-left:1px solid var(--line); padding-left:10px; } .pick-grid { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<div class="shell">
+  <header><div><h1>TDL Settings</h1><p id="subtitle" class="subtitle"></p></div><div id="status" class="status"></div></header>
+  <nav id="tabs" role="tablist" aria-label="Settings sections"></nav>
+  <main id="content" role="tabpanel"></main>
+</div>
+<div class="toolbar"><button id="reload" class="quiet" type="button"></button><button id="save" class="primary" type="button"></button></div>
+<div id="toast" role="status" aria-live="polite" hidden></div>
+<script id="field-labels">window.FIELD_LABELS = {
+  'section.Twitch': {
+    ru: 'Подключение к Twitch',
+    en: 'Twitch Integration'
+  },
+  'section.Safety': {
+    ru: 'Безопасность',
+    en: 'Safety'
+  },
+  'section.AntiSpam': {
+    ru: 'Защита от спама',
+    en: 'Anti-Spam'
+  },
+  'section.Rewards': {
+    ru: 'Награды за баллы канала',
+    en: 'Channel Point Rewards'
+  },
+  'section.RewardCosts': {
+    ru: 'Стоимость наград',
+    en: 'Reward Costs'
+  },
+  'section.Bits': {
+    ru: 'Действия за Bits',
+    en: 'Bits Actions'
+  },
+  'section.Chat': {
+    ru: 'Команды чата',
+    en: 'Chat Commands'
+  },
+  'section.Poll': {
+    ru: 'Голосования зрителей',
+    en: 'Viewer Polls'
+  },
+  'section.Messages': {
+    ru: 'Оповещения в игре',
+    en: 'In-Game Messages'
+  },
+  'section.ChatReplies': {
+    ru: 'Ответы бота в чат',
+    en: 'Chat Replies'
+  },
+  'section.Overlay': {
+    ru: 'Оверлей для стрима',
+    en: 'Stream Overlay'
+  },
+  'section.Stats': {
+    ru: 'Статистика зрителей',
+    en: 'Viewer Statistics'
+  },
+  'section.Events': {
+    ru: 'События канала',
+    en: 'Channel Events'
+  },
+  'section.RaidPools': {
+    ru: 'Наборы действий для рейдов',
+    en: 'Raid Action Pools'
+  },
+  'section.RaidTiers': {
+    ru: 'Уровни рейдов',
+    en: 'Raid Tiers'
+  },
+  'section.RaidNotices': {
+    ru: 'Оповещения о рейдах',
+    en: 'Raid Announcements'
+  },
+  'section.RaidScaling': {
+    ru: 'Сложность рейдов',
+    en: 'Raid Scaling'
+  },
+  'section.AutoPoll': {
+    ru: 'Голосования в чате',
+    en: 'Chat Polls'
+  },
+
+  'group.System': {
+    ru: 'Благословения и баффы',
+    en: 'Blessings & Buffs'
+  },
+  'group.Wrath': {
+    ru: 'Гнев богов',
+    en: 'Divine Wrath'
+  },
+  'group.Summon': {
+    ru: 'Призыв существ',
+    en: 'Creature Summons'
+  },
+  'group.Hunter': {
+    ru: 'Охотники за головами',
+    en: 'Bounty Hunters'
+  },
+  'group.Show': {
+    ru: 'Шоу и спецэффекты',
+    en: 'Show & Visual Effects'
+  },
+  'group.Chaos': {
+    ru: 'Хаос и безумие',
+    en: 'Chaos & Mayhem'
+  },
+  'group.Inventory': {
+    ru: 'Инвентарь и снаряжение',
+    en: 'Inventory & Items'
+  },
+  'group.Teleport': {
+    ru: 'Телепортация',
+    en: 'Teleportation'
+  },
+  'group.Virus': {
+    ru: 'Вампиризм и ликантропия',
+    en: 'Vampirism & Lycanthropy'
+  },
+  'group.Weather': {
+    ru: 'Погода',
+    en: 'Weather'
+  },
+  'group.Gigant': {
+    ru: 'Изменение размера',
+    en: 'Size Scaling'
+  },
+
+  'Twitch.Enabled': {
+    ru: 'Интеграция с Twitch',
+    en: 'Twitch Integration',
+    hint_ru: 'Включает или отключает связь игры с вашим каналом Twitch.',
+    hint_en: 'Enables or disables the connection between the game and your Twitch channel.'
+  },
+  'Twitch.Paused': {
+    ru: 'Пауза интеграции',
+    en: 'Pause Integration',
+    hint_ru: 'Временно приостанавливает выполнение действий зрителей и возвращает баллы за новые запросы.',
+    hint_en: 'Temporarily pauses viewer actions and automatically refunds channel points for new redemptions.'
+  },
+  'Twitch.PauseMode': {
+    ru: 'Режим паузы',
+    en: 'Pause Mode',
+    hint_ru: 'Определяет, отменять ли действия во время паузы с возвратом баллов или накапливать их в очереди до возобновления.',
+    hint_en: 'Choose whether to reject and refund actions during pause or hold them in a queue to run upon resuming.'
+  },
+  'Twitch.ChatAllowEveryone': {
+    ru: 'Команды чата для всех',
+    en: 'Chat Commands for Everyone',
+    hint_ru: 'Позволяет использовать команды чата всем зрителям, а не только стримеру и модераторам.',
+    hint_en: 'Allows all viewers to use chat commands instead of restricting them to the streamer and moderators.'
+  },
+  'Twitch.Notify': {
+    ru: 'Оповещения в игре',
+    en: 'In-Game Notifications',
+    hint_ru: 'Показывает сообщение в левом верхнем углу экрана при срабатывании действия.',
+    hint_en: 'Displays a notification in the top-left corner of the screen when an action triggers.'
+  },
+  'Twitch.PollName': {
+    ru: 'Имя автора для голосований',
+    en: 'Poll Winner Display Name',
+    hint_ru: 'Имя, которое отображается в игровых сообщениях вместо никнейма зрителя при победе варианта в голосовании.',
+    hint_en: 'The display name shown in game notifications when an action is triggered by a poll victory.'
+  },
+  'Twitch.CreateRewards': {
+    ru: 'Автосоздание наград канала',
+    en: 'Auto-Create Channel Rewards',
+    hint_ru: 'Автоматически создаёт награды за баллы на Twitch, что позволяет игре возвращать баллы при переполнении очереди.',
+    hint_en: 'Automatically creates channel point rewards on Twitch, allowing the game to refund points if the queue fills up.'
+  },
+  'Twitch.MockServer': {
+    ru: 'Тестовый режим (без стрима)',
+    en: 'Offline Test Mode',
+    hint_ru: 'Подключает игру к локальному симулятору для проверки наград и событий без запуска реального эфира.',
+    hint_en: 'Connects the game to a local simulator to test rewards and events without going live on stream.'
+  },
+  'Twitch.MockUrl': {
+    ru: 'Адрес тестового сервера',
+    en: 'Test Server Address',
+    hint_ru: 'Сетевой адрес локального симулятора Twitch для тестового режима.',
+    hint_en: 'Network address of the local Twitch simulator used for testing.'
+  },
+
+  'Safety.Blocked': {
+    ru: 'Запрещённые действия',
+    en: 'Blocked Actions',
+    hint_ru: 'Список опасных действий, которые зрители не смогут активировать через Twitch.',
+    hint_en: 'List of dangerous actions that viewers are not allowed to trigger via Twitch.'
+  },
+  'Safety.AllowForceFromViewers': {
+    ru: 'Разрешить залповые действия',
+    en: 'Allow Burst Actions',
+    hint_ru: 'Разрешает зрителям активировать серии и залпы одинаковых действий одновременно.',
+    hint_en: 'Allows viewers to trigger bursts of multiple identical actions simultaneously.'
+  },
+
+  'AntiSpam.UserCooldownSec': {
+    ru: 'Задержка между командами',
+    en: 'User Command Cooldown',
+    hint_ru: 'Минимальное время ожидания в секундах между командами от одного зрителя в чате.',
+    hint_en: 'Minimum wait time in seconds between chat commands from the same viewer.'
+  },
+  'AntiSpam.MaxQueuedPerUser': {
+    ru: 'Максимум действий в очереди на зрителя',
+    en: 'Max Queued Actions per Viewer',
+    hint_ru: 'Максимальное количество действий от одного зрителя, которые могут одновременно ожидать выполнения.',
+    hint_en: 'Maximum number of pending actions allowed in the queue for a single viewer.'
+  },
+  'AntiSpam.IgnoreDuplicateSec': {
+    ru: 'Игнорирование повторов команд',
+    en: 'Ignore Duplicate Commands',
+    hint_ru: 'Время в секундах, в течение которого повторные одинаковые команды от зрителя игнорируются.',
+    hint_en: 'Time in seconds during which identical commands from the same viewer are silently ignored.'
+  },
+  'AntiSpam.ExemptBits': {
+    ru: 'Не ограничивать действия за Bits',
+    en: 'Exempt Bits from Limits',
+    hint_ru: 'Позволяет платным действиям за Bits становиться в очередь без ограничений лимита на зрителя.',
+    hint_en: 'Allows actions bought with Bits to bypass the per-viewer queue limit.'
+  },
+
+  'Overlay.Enabled': {
+    ru: 'Включить веб-оверлей',
+    en: 'Enable Web Overlay',
+    hint_ru: 'Включает оверлей для OBS с отображением недавних событий и лучших зрителей.',
+    hint_en: 'Enables the browser overlay for OBS showing recent events and top viewers.'
+  },
+  'Overlay.Port': {
+    ru: 'Порт оверлея',
+    en: 'Overlay Port',
+    hint_ru: 'Номер сетевого порта для подключения источника браузера в OBS.',
+    hint_en: 'Network port used by the browser source in OBS to load the overlay.'
+  },
+  'Overlay.ShowTop': {
+    ru: 'Показывать топ зрителей',
+    en: 'Show Top Viewers',
+    hint_ru: 'Отображает блок с самыми активными зрителями на стриме.',
+    hint_en: 'Displays the card with the most active viewers on the stream overlay.'
+  },
+  'Overlay.RecentMinutes': {
+    ru: 'Время показа недавних событий',
+    en: 'Recent Events Duration',
+    hint_ru: 'Сколько минут события остаются в списке недавних на оверлее (0 — не удалять).',
+    hint_en: 'How many minutes events stay in the recent list on the overlay (0 keeps everything).'
+  },
+  'Overlay.ShowRecent': {
+    ru: 'Показывать недавние события',
+    en: 'Show Recent Events',
+    hint_ru: 'Отображает список последних активированных действий на оверлее.',
+    hint_en: 'Displays the card showing recently triggered actions on the overlay.'
+  },
+  'Overlay.Sound': {
+    ru: 'Звуковое оповещение',
+    en: 'Sound Alert',
+    hint_ru: 'Воспроизводит звуковой сигнал в оверлее при появлении нового события.',
+    hint_en: 'Plays an audio chime on the overlay whenever a new action appears.'
+  },
+  'Overlay.SoundVolume': {
+    ru: 'Громкость оповещения',
+    en: 'Alert Volume',
+    hint_ru: 'Громкость звукового сигнала оверлея в процентах.',
+    hint_en: 'Volume percentage for the overlay audio notification.'
+  },
+  'Overlay.SoundFile': {
+    ru: 'Свой звуковой файл',
+    en: 'Custom Sound File',
+    hint_ru: 'Имя аудиофайла (.mp3, .wav, .ogg) рядом с файлом оверлея (оставьте пустым для стандартного сигнала).',
+    hint_en: 'Filename of a custom audio file (.mp3, .wav, .ogg) next to the overlay file (leave empty for default chime).'
+  },
+
+  'Stats.Enabled': {
+    ru: 'Вести статистику активности',
+    en: 'Track Viewer Stats',
+    hint_ru: 'Сохраняет историю активности зрителей и количество вызванных действий между стримами.',
+    hint_en: 'Saves viewer activity and triggered reward counts between streams.'
+  },
+  'Stats.ResetOnStart': {
+    ru: 'Сбрасывать статистику при запуске',
+    en: 'Reset Stats on Launch',
+    hint_ru: 'Обнуляет всю накопленную статистику зрителей при каждом старте игры.',
+    hint_en: 'Clears all accumulated viewer statistics every time the game starts.'
+  },
+
+  'Events.Raid': {
+    ru: 'Действие при рейде',
+    en: 'Raid Action',
+    hint_ru: 'Событие в игре, которое запускается, когда другой стример рейдит ваш канал.',
+    hint_en: 'In-game event triggered when another streamer raids your channel.'
+  },
+  'Events.RaidMinViewers': {
+    ru: 'Минимум зрителей в рейде',
+    en: 'Minimum Raid Viewers',
+    hint_ru: 'Минимальное число зрителей в рейде, необходимое для активации действия в игре.',
+    hint_en: 'Minimum number of viewers in a raid required to trigger the in-game action.'
+  },
+  'Events.Sub': {
+    ru: 'Новая подписка',
+    en: 'New Subscription',
+    hint_ru: 'Игровое событие при оформлении зрителем новой платной подписки.',
+    hint_en: 'In-game event triggered when a viewer buys a new subscription.'
+  },
+  'Events.Resub': {
+    ru: 'Продление подписки',
+    en: 'Subscription Renewal',
+    hint_ru: 'Игровое событие при продлении зрителем платной подписки.',
+    hint_en: 'In-game event triggered when a viewer renews their subscription.'
+  },
+  'Events.GiftSub': {
+    ru: 'Подарочная подписка',
+    en: 'Gifted Subscription',
+    hint_ru: 'Игровое событие при дарении платной подписки на канале.',
+    hint_en: 'In-game event triggered when someone gifts a subscription.'
+  },
+  'Events.GiftSubPerGift': {
+    ru: 'Действие за каждый подарок',
+    en: 'Trigger per Individual Gift',
+    hint_ru: 'Срабатывать отдельно за каждую подаренную подписку в пачке (до заданного максимума).',
+    hint_en: 'Triggers the action for each individual gift in a subscription bundle up to the maximum limit.'
+  },
+  'Events.GiftSubMax': {
+    ru: 'Максимум подарков за раз',
+    en: 'Max Gift Sub Triggers',
+    hint_ru: 'Максимальное количество срабатываний от одной пачки подарочных подписок.',
+    hint_en: 'Maximum number of in-game actions triggered by a single bundle of gifted subscriptions.'
+  },
+  'Events.HypeTrainBegin': {
+    ru: 'Старт поезда хайпа',
+    en: 'Hype Train Start',
+    hint_ru: 'Игровое событие, запускаемое при начале поезда хайпа на Twitch.',
+    hint_en: 'In-game event triggered when a Twitch Hype Train begins.'
+  },
+  'Events.HypeTrainLevel': {
+    ru: 'Новый уровень поезда хайпа',
+    en: 'Hype Train Level Up',
+    hint_ru: 'Игровое событие при каждом повышении уровня поезда хайпа.',
+    hint_en: 'In-game event triggered whenever the Hype Train reaches a new level.'
+  },
+
+  'RaidScaling.Enabled': {
+    ru: 'Масштабирование от уровня персонажа',
+    en: 'Character Level Scaling',
+    hint_ru: 'Автоматически подстраивает количество призываемых существ под текущий уровень вашего персонажа.',
+    hint_en: 'Automatically scales the number of summoned creatures based on your character’s level.'
+  },
+  'RaidScaling.1': {
+    ru: 'Множитель для 1–10 уровней',
+    en: 'Multiplier for Levels 1–10',
+    hint_ru: 'Коэффициент количества существ для персонажей с 1 по 10 уровень.',
+    hint_en: 'Creature count multiplier for character levels 1 through 10.'
+  },
+  'RaidScaling.11': {
+    ru: 'Множитель для 11–30 уровней',
+    en: 'Multiplier for Levels 11–30',
+    hint_ru: 'Коэффициент количества существ для персонажей с 11 по 30 уровень.',
+    hint_en: 'Creature count multiplier for character levels 11 through 30.'
+  },
+  'RaidScaling.31': {
+    ru: 'Множитель для 31–50 уровней',
+    en: 'Multiplier for Levels 31–50',
+    hint_ru: 'Коэффициент количества существ для персонажей с 31 по 50 уровень.',
+    hint_en: 'Creature count multiplier for character levels 31 through 50.'
+  },
+  'RaidScaling.51': {
+    ru: 'Множитель для 51–75 уровней',
+    en: 'Multiplier for Levels 51–75',
+    hint_ru: 'Коэффициент количества существ для персонажей с 51 по 75 уровень.',
+    hint_en: 'Creature count multiplier for character levels 51 through 75.'
+  },
+  'RaidScaling.76': {
+    ru: 'Множитель для 76+ уровней',
+    en: 'Multiplier for Levels 76+',
+    hint_ru: 'Коэффициент количества существ для персонажей 76 уровня и выше.',
+    hint_en: 'Creature count multiplier for character level 76 and above.'
+  },
+  'RaidScaling.DragonMinLevel': {
+    ru: 'Минимальный уровень для драконов',
+    en: 'Minimum Level for Dragons',
+    hint_ru: 'До достижения этого уровня драконы заменяются на сильных монстров, чтобы не ломать игру (0 — без ограничений).',
+    hint_en: 'Replaces dragon spawns with strong monsters below this level to prevent instant deaths (0 for no limit).'
+  },
+
+  'AutoPoll.Enabled': {
+    ru: 'Включить автоголосования',
+    en: 'Enable Auto-Polls',
+    hint_ru: 'Периодически запускает голосования среди зрителей в чате за следующее игровое событие.',
+    hint_en: 'Periodically runs chat polls for viewers to vote on the next in-game event.'
+  },
+  'AutoPoll.IntervalMin': {
+    ru: 'Интервал между голосованиями',
+    en: 'Poll Interval',
+    hint_ru: 'Время в минутах между завершением одного голосования и началом следующего.',
+    hint_en: 'Time in minutes between the end of one poll and the start of the next.'
+  },
+  'AutoPoll.DurationSec': {
+    ru: 'Длительность голосования',
+    en: 'Poll Duration',
+    hint_ru: 'Сколько секунд длится голосование зрителей в чате.',
+    hint_en: 'Number of seconds viewers have to cast their votes in chat.'
+  },
+  'AutoPoll.Choices': {
+    ru: 'Количество вариантов',
+    en: 'Number of Choices',
+    hint_ru: 'Количество случайных вариантов действий, предлагаемых зрителям на выбор.',
+    hint_en: 'Number of random event options offered to viewers in each poll.'
+  },
+  'AutoPoll.Pool': {
+    ru: 'Список доступных событий',
+    en: 'Poll Action Pool',
+    hint_ru: 'Набор безопасных действий, из которого игра случайным образом выбирает варианты для голосования.',
+    hint_en: 'The pool of safe actions from which random voting options are selected.'
+  },
+  'AutoPoll.MinVotes': {
+    ru: 'Минимум голосов для победы',
+    en: 'Minimum Votes Required',
+    hint_ru: 'Минимальное общее число голосов зрителей, необходимое для срабатывания победившего события.',
+    hint_en: 'Minimum total votes required for the winning event to be triggered in game.'
+  }
+};</script>
+<script id="action-labels">window.ACTION_LABELS = {
+  SYSTEM_PING: { ru: 'Тестовый пинг', en: 'Test Ping' },
+  SYSTEM_HEALING: { ru: 'Исцеление игрока', en: 'Heal Player' },
+  SYSTEM_BLESSING: { ru: 'Божественное благословение', en: 'Divine Blessing' },
+  WRATH_11: { ru: 'Гнев богов: уровень 1', en: 'Divine Wrath Level 1' },
+  WRATH_12: { ru: 'Гнев богов: уровень 2', en: 'Divine Wrath Level 2' },
+  WRATH_13: { ru: 'Гнев богов: уровень 3', en: 'Divine Wrath Level 3' },
+  SUMMON_ANY: { ru: 'Призыв случайного существа', en: 'Summon Random Creature' },
+  SUMMON_SKELETON: { ru: 'Призыв скелета', en: 'Summon Skeleton' },
+  SUMMON_ANIMAL: { ru: 'Призыв дикого зверя', en: 'Summon Wild Animal' },
+  SUMMON_HUMANOID: { ru: 'Призыв гуманоида', en: 'Summon Humanoid' },
+  SUMMON_UNDEAD: { ru: 'Призыв нежити', en: 'Summon Undead' },
+  SUMMON_STRONG: { ru: 'Призыв сильного врага', en: 'Summon Strong Enemy' },
+  SUMMON_DRAGON: { ru: 'Призыв дракона', en: 'Summon Dragon' },
+  HUNTER_START: { ru: 'Охота на игрока', en: 'Hunter Tracks Player' },
+  COMEDY_FAKE_HERO: { ru: 'Фальшивый герой', en: 'Fake Hero' },
+  COMEDY_HORROR: { ru: 'Жуткая погоня', en: 'Horror Chase' },
+  COMEDY_ARENA: { ru: 'Битва на арене', en: 'Arena Battle' },
+  COMEDY_ESCORT: { ru: 'Миссия сопровождения', en: 'Escort Mission' },
+  CHAOS_LOW_G: { ru: 'Низкая гравитация', en: 'Low Gravity' },
+  CHAOS_BACKFIRE: { ru: 'Осечка заклинаний', en: 'Spell Backfire' },
+  INVENTORY_SCATTER: { ru: 'Разбросать предметы', en: 'Scatter Items' },
+  INVENTORY_DROP_ALL: { ru: 'Сбросить все предметы', en: 'Drop All Items' },
+  TELEPORT_RANDOM_CITY: { ru: 'Телепорт в случайный город', en: 'Teleport to Random City' },
+  TELEPORT_RANDOM_DANGER: { ru: 'Телепорт в опасное место', en: 'Teleport to Dangerous Place' },
+  TELEPORT_HIGH_HROTHGAR: { ru: 'Телепорт в Высокий Хротгар', en: 'Teleport to High Hrothgar' },
+  TELEPORT_WHITERUN: { ru: 'Телепорт в Вайтран', en: 'Teleport to Whiterun' },
+  TELEPORT_SOLITUDE: { ru: 'Телепорт в Солитьюд', en: 'Teleport to Solitude' },
+  TELEPORT_WINDHELM: { ru: 'Телепорт в Виндхельм', en: 'Teleport to Windhelm' },
+  TELEPORT_RIFTEN: { ru: 'Телепорт в Рифтен', en: 'Teleport to Riften' },
+  TELEPORT_MARKARTH: { ru: 'Телепорт в Маркарт', en: 'Teleport to Markarth' },
+  TELEPORT_FALKREATH: { ru: 'Телепорт в Фолкрит', en: 'Teleport to Falkreath' },
+  TELEPORT_DAWNSTAR: { ru: 'Телепорт в Данстар', en: 'Teleport to Dawnstar' },
+  VIRUS_DISEASE: { ru: 'Заражение болезнью', en: 'Contract Disease' },
+  VIRUS_WEREWOLF: { ru: 'Превращение в оборотня', en: 'Turn into Werewolf' },
+  VIRUS_VAMPIRE: { ru: 'Превращение в Лорда-вампира', en: 'Turn into Vampire Lord' },
+  WEATHER_CLEAR: { ru: 'Ясная погода', en: 'Clear Weather' },
+  WEATHER_RAIN: { ru: 'Дождливая погода', en: 'Rainy Weather' },
+  WEATHER_SNOW: { ru: 'Снежная погода', en: 'Snowy Weather' },
+  WEATHER_STORM: { ru: 'Грозовая погода', en: 'Stormy Weather' },
+  WEATHER_FOG: { ru: 'Густой туман', en: 'Foggy Weather' },
+  WEATHER_RESET: { ru: 'Сброс погоды', en: 'Reset Weather' },
+  GIGANT_BIG: { ru: 'Гигантский игрок', en: 'Giant Player' },
+  GIGANT_SMALL: { ru: 'Крошечный игрок', en: 'Tiny Player' },
+  GIGANT_SPEED: { ru: 'Высокая скорость', en: 'Fast Movement' },
+  GIGANT_SLOW: { ru: 'Низкая скорость', en: 'Slow Movement' },
+  GIGANT_RESET: { ru: 'Сброс размера и скорости', en: 'Reset Size and Speed' }
+};</script>
+<script id="sample-config" type="application/json">{"version":1,"lang":"ru","port":8645,"sections":[{"name":"Twitch","entries":[{"key":"Enabled","value":"1"},{"key":"Paused","value":"0"},{"key":"PauseMode","value":"cancel"},{"key":"ChatAllowEveryone","value":"0"},{"key":"Notify","value":"1"},{"key":"PollName","value":"Чат"},{"key":"CreateRewards","value":"1"},{"key":"MockServer","value":"0"},{"key":"MockUrl","value":"ws://127.0.0.1:8080/ws"}]},{"name":"Safety","entries":[{"key":"Blocked","value":"VIRUS_WEREWOLF, VIRUS_VAMPIRE, INVENTORY_DROP_ALL"},{"key":"AllowForceFromViewers","value":"0"}]},{"name":"AntiSpam","entries":[{"key":"UserCooldownSec","value":"20"},{"key":"MaxQueuedPerUser","value":"2"},{"key":"IgnoreDuplicateSec","value":"5"},{"key":"ExemptBits","value":"1"}]},{"name":"Rewards","entries":[{"key":"TDL: Лёгкое испытание","value":"WEATHER_CLEAR, WEATHER_RAIN, WEATHER_SNOW, WEATHER_FOG, SUMMON_SKELETON, SUMMON_ANIMAL, SYSTEM_HEALING, TELEPORT_RANDOM_CITY, TELEPORT_WHITERUN, TELEPORT_SOLITUDE, TELEPORT_WINDHELM, TELEPORT_RIFTEN, TELEPORT_MARKARTH, TELEPORT_FALKREATH, TELEPORT_DAWNSTAR, TELEPORT_HIGH_HROTHGAR"},{"key":"TDL: Среднее испытание","value":"SUMMON_ANY, SUMMON_HUMANOID, SUMMON_UNDEAD, WEATHER_STORM, CHAOS_LOW_G, GIGANT_SMALL, GIGANT_SLOW, INVENTORY_SCATTER, VIRUS_DISEASE, SYSTEM_BLESSING, TELEPORT_RANDOM_DANGER"},{"key":"TDL: Тяжёлое испытание","value":"SUMMON_STRONG, WRATH_11, WRATH_12, WRATH_13, CHAOS_BACKFIRE, GIGANT_BIG, GIGANT_SPEED, COMEDY_FAKE_HERO, COMEDY_HORROR, COMEDY_ESCORT"},{"key":"TDL: Эпическое испытание","value":"SUMMON_DRAGON, HUNTER_START, COMEDY_ARENA"}]},{"name":"RewardCosts","entries":[{"key":"TDL: Лёгкое испытание","value":"500"},{"key":"TDL: Среднее испытание","value":"1500"},{"key":"TDL: Тяжёлое испытание","value":"4000"},{"key":"TDL: Эпическое испытание","value":"10000"}]},{"name":"Bits","entries":[{"key":"100","value":"WEATHER_CLEAR, WEATHER_RAIN, WEATHER_SNOW, WEATHER_FOG, SUMMON_SKELETON, SUMMON_ANIMAL, SYSTEM_HEALING, TELEPORT_RANDOM_CITY"},{"key":"500","value":"SUMMON_ANY, SUMMON_HUMANOID, SUMMON_UNDEAD, WEATHER_STORM, CHAOS_LOW_G, GIGANT_SMALL, GIGANT_SLOW, INVENTORY_SCATTER, VIRUS_DISEASE, SYSTEM_BLESSING, TELEPORT_RANDOM_DANGER"},{"key":"1000","value":"SUMMON_STRONG, WRATH_11, WRATH_12, WRATH_13, CHAOS_BACKFIRE, GIGANT_BIG, GIGANT_SPEED, COMEDY_FAKE_HERO, COMEDY_HORROR, COMEDY_ESCORT"},{"key":"2500","value":"SUMMON_DRAGON, HUNTER_START, COMEDY_ARENA"}]},{"name":"Chat","entries":[{"key":"!tdl_ping","value":"SYSTEM_PING"},{"key":"!tdl_heal","value":"SYSTEM_HEALING"},{"key":"!tdl_weather_reset","value":"WEATHER_RESET"},{"key":"!tdl_size_reset","value":"GIGANT_RESET"}]},{"name":"Poll","entries":[{"key":"Дракон","value":"SUMMON_DRAGON"},{"key":"Охотник","value":"HUNTER_START"},{"key":"Арена","value":"COMEDY_ARENA"}]},{"name":"Messages","entries":[{"key":"RAID","value":"{user} рейдит с {viewers} зрителями: {list}"},{"key":"SYSTEM_PING","value":"{user} проверил связь"},{"key":"SYSTEM_HEALING","value":"{user} исцелил вас"},{"key":"SYSTEM_BLESSING","value":"{user} благословил вас"},{"key":"WRATH_11","value":"{user} обрушил на вас гнев богов"},{"key":"WRATH_12","value":"{user} обрушил на вас гнев богов"},{"key":"WRATH_13","value":"{user} обрушил на вас гнев богов"},{"key":"SUMMON_ANY","value":"{user} натравил на вас существо"},{"key":"SUMMON_SKELETON","value":"{user} поднял скелета"},{"key":"SUMMON_ANIMAL","value":"{user} натравил на вас зверя"},{"key":"SUMMON_HUMANOID","value":"{user} призвал противника"},{"key":"SUMMON_UNDEAD","value":"{user} поднял нежить"},{"key":"SUMMON_STRONG","value":"{user} призвал сильного врага"},{"key":"SUMMON_DRAGON","value":"{user} призвал дракона!"},{"key":"HUNTER_START","value":"{user} пустил по вашему следу охотника"},{"key":"COMEDY_FAKE_HERO","value":"{user} прислал вам горе-героя"},{"key":"COMEDY_HORROR","value":"{user} устроил вам хоррор. Бегите!"},{"key":"COMEDY_ARENA","value":"{user} вызвал вас на арену"},{"key":"COMEDY_ESCORT","value":"{user} поручил вам охранять спутника"},{"key":"CHAOS_LOW_G","value":"{user} ослабил гравитацию"},{"key":"CHAOS_BACKFIRE","value":"{user} устроил хаос"},{"key":"INVENTORY_SCATTER","value":"{user} устроил дождь из предметов"},{"key":"INVENTORY_DROP_ALL","value":"{user} вытряхнул ваш инвентарь"},{"key":"TELEPORT_RANDOM_CITY","value":"{user} отправил вас в случайный город"},{"key":"TELEPORT_RANDOM_DANGER","value":"{user} забросил вас в опасное место"},{"key":"TELEPORT_HIGH_HROTHGAR","value":"{user} отправил вас на Высокий Хротгар"},{"key":"TELEPORT_WHITERUN","value":"{user} отправил вас в Вайтран"},{"key":"TELEPORT_SOLITUDE","value":"{user} отправил вас в Солитьюд"},{"key":"TELEPORT_WINDHELM","value":"{user} отправил вас в Виндхельм"},{"key":"TELEPORT_RIFTEN","value":"{user} отправил вас в Рифтен"},{"key":"TELEPORT_MARKARTH","value":"{user} отправил вас в Маркарт"},{"key":"TELEPORT_FALKREATH","value":"{user} отправил вас в Фолкрит"},{"key":"TELEPORT_DAWNSTAR","value":"{user} отправил вас в Данстар"},{"key":"VIRUS_DISEASE","value":"{user} наслал на вас болезнь"},{"key":"VIRUS_WEREWOLF","value":"{user} превратил вас в оборотня"},{"key":"VIRUS_VAMPIRE","value":"{user} превратил вас в лорда-вампира"},{"key":"WEATHER_CLEAR","value":"{user} разогнал тучи"},{"key":"WEATHER_RAIN","value":"{user} вызвал дождь"},{"key":"WEATHER_SNOW","value":"{user} вызвал снегопад"},{"key":"WEATHER_STORM","value":"{user} вызвал бурю"},{"key":"WEATHER_FOG","value":"{user} нагнал туман"},{"key":"WEATHER_RESET","value":"{user} вернул обычную погоду"},{"key":"GIGANT_BIG","value":"{user} увеличил вас"},{"key":"GIGANT_SMALL","value":"{user} уменьшил вас"},{"key":"GIGANT_SPEED","value":"{user} ускорил вас"},{"key":"GIGANT_SLOW","value":"{user} замедлил вас"},{"key":"GIGANT_RESET","value":"{user} вернул вам обычный рост и скорость"}]},{"name":"ChatReplies","entries":[{"key":"Enabled","value":"1"},{"key":"Queued","value":"@{user}, {trigger}: в очереди #{pos}, ~{eta} с"},{"key":"Now","value":""},{"key":"Dropped","value":"@{user}, {trigger}: очередь переполнена, попробуй позже. {refund}"},{"key":"Evicted","value":"@{user}, {trigger}: вытеснено более ценным действием. {refund}"},{"key":"Refunded","value":"Баллы возвращены."},{"key":"HelpCommand","value":"!tdl"},{"key":"Top","value":"TDL top: {top}"},{"key":"Me","value":"@{user} TDL: {actions} actions, {bits} bits, {redemptions} redemptions"},{"key":"AutoPollStart","value":"Голосование: {options} - пишите !1..!{choices} ({seconds} с)"},{"key":"AutoPollNoVotes","value":"TDL: нет голосов"},{"key":"AutoPollWin","value":"TDL: победило {winner} ({counts})"},{"key":"AutoPollCanceled","value":"TDL: голосование отменено"},{"key":"Paused","value":"@{user}, TDL paused. {refund}"},{"key":"PausedHeld","value":"@{user}, TDL на паузе, команда в очереди"},{"key":"Blocked","value":"@{user}, that action is blocked. {refund}"},{"key":"TooMany","value":"@{user}, you already have too many actions queued. {refund}"},{"key":"Help","value":"Награды: {rewards} | Биты: {bits} | Команды: {commands}"}]},{"name":"Overlay","entries":[{"key":"Enabled","value":"1"},{"key":"Port","value":"8645"},{"key":"ShowTop","value":"1"},{"key":"RecentMinutes","value":"10"},{"key":"ShowRecent","value":"1"},{"key":"Sound","value":"1"},{"key":"SoundVolume","value":"60"},{"key":"SoundFile","value":""}]},{"name":"Stats","entries":[{"key":"Enabled","value":"1"},{"key":"ResetOnStart","value":"0"}]},{"name":"Events","entries":[{"key":"Raid","value":"SUMMON_ANY"},{"key":"RaidMinViewers","value":"1"},{"key":"Sub","value":"SYSTEM_BLESSING"},{"key":"Resub","value":"SYSTEM_BLESSING"},{"key":"GiftSub","value":"SUMMON_ANY"},{"key":"GiftSubPerGift","value":"0"},{"key":"GiftSubMax","value":"5"},{"key":"HypeTrainBegin","value":"WEATHER_STORM"},{"key":"HypeTrainLevel","value":"SUMMON_STRONG"}]},{"name":"RaidPools","entries":[{"key":"wrath","value":"WRATH_11, WRATH_12, WRATH_13"}]},{"name":"RaidTiers","entries":[{"key":"1","value":"FORCE1|SYSTEM_HEALING + SUMMON_SKELETON|1|10"},{"key":"11","value":"FORCE1|SYSTEM_HEALING + SUMMON_ANIMAL|3|10"},{"key":"31","value":"FORCE1|SYSTEM_HEALING + SUMMON_HUMANOID|3|10 + SUMMON_UNDEAD|1|5"},{"key":"71","value":"FORCE1|SYSTEM_HEALING + SUMMON_UNDEAD|5|10 + SUMMON_STRONG|1|5 + WRATH_11"},{"key":"121","value":"FORCE1|SYSTEM_HEALING + SUMMON_STRONG|5|10 + RANDOM(wrath)|1|1"},{"key":"201","value":"FORCE1|SYSTEM_HEALING + FORCE1|SYSTEM_BLESSING + SUMMON_DRAGON|/30|10 + SUMMON_STRONG|/50|8 + RANDOM(wrath)|1|2"}]},{"name":"RaidNotices","entries":[{"key":"201","value":"Ваш чат помогает и благословляет вас!"}]},{"name":"RaidScaling","entries":[{"key":"Enabled","value":"1"},{"key":"1","value":"0.5"},{"key":"11","value":"0.75"},{"key":"31","value":"1.0"},{"key":"51","value":"1.25"},{"key":"76","value":"1.5"},{"key":"DragonMinLevel","value":"20"}]},{"name":"AutoPoll","entries":[{"key":"Enabled","value":"0"},{"key":"IntervalMin","value":"10"},{"key":"DurationSec","value":"60"},{"key":"Choices","value":"3"},{"key":"Pool","value":"WEATHER_STORM, SUMMON_ANIMAL, GIGANT_SMALL, SYSTEM_HEALING, SUMMON_SKELETON, WEATHER_RAIN"},{"key":"MinVotes","value":"1"}]}]}</script>
+<script>
+(() => {
+  'use strict';
+  const TOKEN = '{{TDL_TOKEN}}';
+  const MOCK = location.protocol === 'file:';
+  const IDS = 'SYSTEM_PING SYSTEM_HEALING SYSTEM_BLESSING WRATH_11 WRATH_12 WRATH_13 SUMMON_ANY SUMMON_SKELETON SUMMON_ANIMAL SUMMON_HUMANOID SUMMON_UNDEAD SUMMON_STRONG SUMMON_DRAGON HUNTER_START COMEDY_FAKE_HERO COMEDY_HORROR COMEDY_ARENA COMEDY_ESCORT CHAOS_LOW_G CHAOS_BACKFIRE INVENTORY_SCATTER INVENTORY_DROP_ALL TELEPORT_RANDOM_CITY TELEPORT_RANDOM_DANGER TELEPORT_HIGH_HROTHGAR TELEPORT_WHITERUN TELEPORT_SOLITUDE TELEPORT_WINDHELM TELEPORT_RIFTEN TELEPORT_MARKARTH TELEPORT_FALKREATH TELEPORT_DAWNSTAR VIRUS_DISEASE VIRUS_WEREWOLF VIRUS_VAMPIRE WEATHER_CLEAR WEATHER_RAIN WEATHER_SNOW WEATHER_STORM WEATHER_FOG WEATHER_RESET GIGANT_BIG GIGANT_SMALL GIGANT_SPEED GIGANT_SLOW GIGANT_RESET'.split(' ');
+  const GROUPS = [['System','SYSTEM_'],['Wrath','WRATH_'],['Summon','SUMMON_'],['Hunter','HUNTER_'],['Show','COMEDY_'],['Chaos','CHAOS_'],['Inventory','INVENTORY_'],['Teleport','TELEPORT_'],['Virus','VIRUS_'],['Weather','WEATHER_'],['Gigant','GIGANT_']];
+  const tabs = ['main','rewards','chat','polls','raids','texts','advanced'];
+  const L = {
+    en:{subtitle:'Twitch actions, raids and overlay',unsaved:'Unsaved changes',saved:'All changes saved',save:'Save and apply',reload:'Reload from file',reloadAsk:'Discard unsaved changes and reload?',leaveAsk:'You have unsaved changes.',saveOk:'Settings saved and applied.',mockOk:'Mock POST body logged to the console.',loadError:'Could not load settings: ',saveError:'Could not save settings: ',noGame:'No connection to the game. Start the game and open the settings again (MCM → About).',invalid:'Fix: ',add:'Add row',delete:'Delete',raw:'Raw value',single:'Single',random:'Random pick',burst:'Burst',mode:'Mode',action:'Action',count:'Count',title:'Title',cost:'Cost',threshold:'Threshold',text:'Text',command:'Command',main:'Main',rewards:'Rewards & bits',chat:'Chat commands',polls:'Polls',raids:'Raids & events',texts:'Texts',advanced:'Advanced',twitch:'Twitch',safety:'Safety',antispam:'Anti-spam',overlay:'Overlay',bits:'Bits',poll:'Poll choices',autopoll:'Automatic polls',events:'Events',raidtiers:'Raid tiers',raidpools:'Raid pools',raidnotices:'Raid notices',raidscaling:'Raid scaling',messages:'In-game messages',replies:'Chat replies',blocked:'Blocked actions',pool:'Action pool',parts:'Parts',kind:'Kind',once:'Once',range:'Amount from … to … (grows with raid size)',per:'1 per N viewers, up to …',force:'Instantly, skip queue',fromPool:'Random from pool',fromList:'Random from list',from:'from',viewers:'viewers',minLabel:'from',maxLabel:'to',perMax:'up to',instant:'instantly',previewUnavailable:'Preview unavailable',burstPrefix:'Burst:',addPart:'Add part',addSection:'Add section',addKey:'Add key',section:'Section',key:'Key',value:'Value',portHint:'Server port is read-only here.',textHint:'Use {user} and {trigger} where appropriate.',advancedHint:'All sections and keys, including settings without a visual editor.',duplicate:'duplicate key',empty:'empty key or section',badKey:'invalid key',badLine:'line break in a key or value',badCommand:'chat command must start with !',number:'must be a number',rangeError:'The first amount cannot exceed the second',countError:'count must be from 1 to 50',badAction:'select an action',badPool:'select a pool or actions',badPart:'invalid raid part',invalidSection:'invalid section name'},
+    ru:{subtitle:'Действия Twitch, рейды и оверлей',unsaved:'Есть несохранённые изменения',saved:'Все изменения сохранены',save:'Сохранить и применить',reload:'Загрузить из файла',reloadAsk:'Отменить изменения и загрузить файл заново?',leaveAsk:'Есть несохранённые изменения.',saveOk:'Настройки сохранены и применены.',mockOk:'Тело запроса выведено в консоль.',loadError:'Не удалось загрузить настройки: ',saveError:'Не удалось сохранить настройки: ',noGame:'Нет связи с игрой. Запустите игру и откройте настройки заново (MCM → О моде).',invalid:'Исправьте: ',add:'Добавить строку',delete:'Удалить',raw:'Текст',single:'Одно действие',random:'Случайное',burst:'Серия',mode:'Режим',action:'Действие',count:'Количество',title:'Название',cost:'Цена',threshold:'Порог',text:'Текст',command:'Команда',main:'Основное',rewards:'Награды и биты',chat:'Команды чата',polls:'Опросы',raids:'Рейды и события',texts:'Тексты',advanced:'Дополнительно',twitch:'Twitch',safety:'Безопасность',antispam:'Антиспам',overlay:'Оверлей',bits:'Биты',poll:'Варианты опроса',autopoll:'Автоопрос',events:'События',raidtiers:'Уровни рейда',raidpools:'Наборы рейда',raidnotices:'Сообщения рейда',raidscaling:'Масштаб рейда',messages:'Сообщения в игре',replies:'Ответы в чате',blocked:'Заблокированные действия',pool:'Набор действий',parts:'Части',kind:'Вид',once:'Один раз',range:'Количество от … до … (растёт с размером рейда)',per:'1 на каждые N зрителей, но не больше …',force:'Сразу, без очереди',fromPool:'Случайное из набора',fromList:'Случайное из списка',from:'от',viewers:'зрителей',minLabel:'от',maxLabel:'до',perMax:'макс',instant:'сразу',previewUnavailable:'Предпросмотр недоступен',burstPrefix:'Серия:',addPart:'Добавить часть',addSection:'Добавить раздел',addKey:'Добавить ключ',section:'Раздел',key:'Ключ',value:'Значение',portHint:'Порт сервера здесь доступен только для чтения.',textHint:'При необходимости используйте {user} и {trigger}.',advancedHint:'Все разделы и ключи, включая настройки без отдельного редактора.',duplicate:'повторяющийся ключ',empty:'пустой ключ или раздел',badKey:'недопустимый ключ',badLine:'перенос строки в ключе или значении',badCommand:'команда чата должна начинаться с !',number:'нужно число',rangeError:'Первое количество не может быть больше второго',countError:'число должно быть от 1 до 50',badAction:'выберите действие',badPool:'выберите набор или действия',badPart:'недопустимая часть рейда',invalidSection:'недопустимое имя раздела'}
+  };
+  let lang='en', config=null, baseline='', active='main', toastTimer;
+  const $ = id => document.getElementById(id);
+  const t = key => L[lang][key] || key;
+  const node = (tag, cls, value) => { const e=document.createElement(tag); if(cls)e.className=cls; if(value!==undefined)e.textContent=value; return e; };
+  const add = (p,...children) => { children.forEach(c=>p.append(c)); return p; };
+  const actionName = id => (window.ACTION_LABELS[id] && window.ACTION_LABELS[id][lang]) || id;
+  const fieldLabel = (name,raw=name) => window.FIELD_LABELS[name]?.[lang] || raw;
+  const fieldHint = name => window.FIELD_LABELS[name]?.[`hint_${lang}`] || '';
+  const sectionLabel = name => fieldLabel(`section.${name}`,name);
+  const groupLabel = name => fieldLabel(`group.${name}`,name);
+  function caption(name,raw) { const box=node('span'),hint=fieldHint(name);box.append(node('span',null,fieldLabel(name,raw)));if(hint)box.append(node('small','hint',hint));box.title=hint;return box; }
+  const section = name => config.sections.find(s=>s.name===name);
+  const ensure = name => { let s=section(name); if(!s){s={name,entries:[]};config.sections.push(s);} return s; };
+  const entry = (s,k) => section(s)?.entries.find(e=>e.key===k);
+  const get = (s,k) => entry(s,k)?.value ?? '';
+  function set(s,k,v) { const list=ensure(s).entries, found=list.find(e=>e.key===k); if(found)found.value=String(v); else list.push({key:k,value:String(v)}); changed(); }
+  function remove(s,k) { const target=section(s); if(target){target.entries=target.entries.filter(e=>e.key!==k);changed();} }
+  const copy = data => JSON.parse(JSON.stringify(data));
+  function changed() { $('status').textContent=JSON.stringify(config.sections)===baseline?t('saved'):t('unsaved'); $('status').classList.toggle('dirty',JSON.stringify(config.sections)!==baseline); }
+  function toast(message,bad=false) { const e=$('toast'); e.textContent=message; e.style.borderColor=bad?'var(--bad)':'var(--gold)'; e.hidden=false; clearTimeout(toastTimer); toastTimer=setTimeout(()=>e.hidden=true,5000); }
+  function input(value='',type='text') { const e=node('input');e.type=type;e.value=value;return e; }
+  function button(label,fn,cls='quiet') { const e=node('button',cls,label);e.type='button';e.addEventListener('click',fn);return e; }
+  function select(options,value,fn) { const e=node('select'); options.forEach(([v,label])=>{const o=node('option',null,label);o.value=v;e.add(o);}); e.value=value; if(fn)e.addEventListener('change',()=>fn(e.value)); return e; }
+  function card(parent,title,wide=false) { const c=node('section','card'+(wide?' wide':''));add(c,node('h2',null,title));parent.append(c);return c; }
+  function field(parent,label,control,name) {const row=node('div','field');if(name)control.title=fieldHint(name);add(row,name?caption(name,label):node('span',null,label),control);parent.append(row);return row;}
+  function textField(parent,s,k,label=k,type='text',readonly=false) {const e=input(get(s,k),type);e.readOnly=readonly;e.addEventListener('input',()=>set(s,k,e.value));field(parent,label,e,`${s}.${k}`);return e;}
+  function checkField(parent,s,k,label=k) {const e=input('','checkbox');e.checked=get(s,k)==='1';e.title=fieldHint(`${s}.${k}`);e.addEventListener('change',()=>set(s,k,e.checked?'1':'0'));const wrap=node('label','check');add(wrap,e,caption(`${s}.${k}`,label));parent.append(wrap);return e;}
+  function actionSelect(value,fn,extra=[]) {return select([['','—'],...GROUPS.flatMap(([name,prefix])=>IDS.filter(id=>id.startsWith(prefix)).map(id=>[id,`${groupLabel(name)} / ${actionName(id)}`])),...extra.map(x=>[x,x])],value,fn);}
+  function actionChecks(value,fn) {const box=node('div','pick-grid'),selected=new Set(value.split(',').map(x=>x.trim()).filter(Boolean));GROUPS.forEach(([name,prefix])=>{const d=node('details','pick-group');const summary=node('summary',null,groupLabel(name));const list=node('div','checks');IDS.filter(id=>id.startsWith(prefix)).forEach(id=>{const cb=input('','checkbox');cb.checked=selected.has(id);cb.addEventListener('change',()=>{cb.checked?selected.add(id):selected.delete(id);fn(IDS.filter(x=>selected.has(x)).join(', '));});const label=node('label');add(label,cb,node('span',null,actionName(id)));list.append(label);});add(d,summary,list);box.append(d);});return box;}
+  function actionEditor(value,fn) {
+    const host=node('div','action-editor');
+    const parsed=parseAction(value);let mode=parsed.mode;
+    const modeSelect=select([['single',t('single')],['random',t('random')],['burst',t('burst')],['raw',t('raw')]],mode,v=>{mode=v; render();});host.append(modeSelect);
+    function render(){while(host.childNodes.length>1)host.lastChild.remove();const area=node('div','action-main');host.append(area);
+      if(mode==='raw'){const e=input(value);e.addEventListener('input',()=>{value=e.value;fn(value);});area.append(e);return;}
+      if(mode==='single'){let id=parsed.mode==='single'?parsed.actions[0]:IDS[0];area.append(actionSelect(id,v=>{id=v;value=id;fn(value);}));value=id;fn(value);return;}
+       if(mode==='burst'){let id=parsed.mode==='burst'?parsed.actions[0]:IDS[0],count=parsed.mode==='burst'?parsed.count:'1';const row=node('div','inline');const sel=actionSelect(id,v=>{id=v;value=`FORCE|${id}|${count}`;fn(value);});const n=input(count,'number');n.min='1';n.max='50';n.setAttribute('aria-label',t('count'));n.addEventListener('input',()=>{count=n.value;value=`FORCE|${id}|${count}`;fn(value);});add(row,node('span',null,t('burstPrefix')),sel,node('span',null,'×'),n);area.append(row);value=`FORCE|${id}|${count}`;fn(value);return;}
+      let list=parsed.mode==='random'?[...parsed.actions]:[IDS[0],IDS[1]];
+      const multi=node('div','multi');area.append(multi);
+      function draw(){multi.replaceChildren();list.forEach((id,i)=>{const sel=actionSelect(id,v=>{list[i]=v;value=list.join(', ');fn(value);});multi.append(sel,button('×',()=>{list.splice(i,1);value=list.join(', ');fn(value);draw();},'mini'));});multi.append(button('+',()=>{list.push(IDS[0]);value=list.join(', ');fn(value);draw();},'mini'));}draw();value=list.join(', ');fn(value);
+    } render();return host;
+  }
+  function parseAction(value) {const v=value.trim();if(IDS.includes(v))return {mode:'single',actions:[v]};let m=/^FORCE\|([^|]+)\|(\d+)$/.exec(v);if(m&&IDS.includes(m[1]))return {mode:'burst',actions:[m[1]],count:m[2]};const a=v.split(',').map(x=>x.trim());if(a.length>1&&a.every(x=>IDS.includes(x)))return {mode:'random',actions:a};return {mode:'raw',actions:[]};}
+  function mappingRows(parent,s,label,opts={}) {const box=card(parent,label,opts.wide);const list=node('div');box.append(list);
+    function draw(){list.replaceChildren();const target=ensure(s);target.entries.forEach((e,i)=>{const row=node('div','row'+(opts.cost?' four':'')+(opts.two?' two':''));const key=input(e.key,opts.numeric?'number':'text');key.placeholder=opts.keyLabel||t('key');key.addEventListener('input',()=>{const old=e.key;e.key=key.value;if(opts.cost){const c=entry('RewardCosts',old);if(c)c.key=e.key;}changed();});row.append(key);
+      if(opts.text){const val=input(e.value);val.addEventListener('input',()=>{e.value=val.value;changed();});row.append(val);}else{row.append(actionEditor(e.value,v=>{e.value=v;changed();}));}
+      if(opts.cost){const cost=input(get('RewardCosts',e.key),'number');cost.min='0';cost.addEventListener('input',()=>set('RewardCosts',e.key,cost.value));row.append(cost);}
+      row.append(button('×',()=>{const old=e.key;target.entries.splice(i,1);if(opts.cost)remove('RewardCosts',old);changed();draw();},'mini danger'));list.append(row);});}
+    draw();box.append(button(t('add'),()=>{const e={key:'',value:opts.text?'':IDS[0]};ensure(s).entries.push(e);changed();draw();const inputs=list.querySelectorAll('input');inputs[inputs.length-(opts.cost?2:1)]?.focus();}));return box;}
+  function renderMain(root){const grid=node('div','grid');root.append(grid);let c=card(grid,sectionLabel('Twitch'));['Enabled','Notify','ChatAllowEveryone','Paused','CreateRewards'].forEach(k=>checkField(c,'Twitch',k,k));textField(c,'Twitch','PollName');const radios=node('div','inline');['cancel','hold'].forEach(v=>{const r=input('','radio');r.name='pause-mode';r.value=v;r.checked=get('Twitch','PauseMode')===v;r.addEventListener('change',()=>set('Twitch','PauseMode',v));const l=node('label','check');add(l,r,node('span',null,{cancel:{ru:'отменять',en:'cancel'},hold:{ru:'копить до снятия паузы',en:'hold until resume'}}[v][lang==='ru'?'ru':'en']));radios.append(l);});field(c,'PauseMode',radios,'Twitch.PauseMode');
+    c=card(grid,sectionLabel('Safety'));checkField(c,'Safety','AllowForceFromViewers');add(c,add(node('h3'),caption('Safety.Blocked','Blocked')),actionChecks(get('Safety','Blocked'),v=>set('Safety','Blocked',v)));
+    c=card(grid,sectionLabel('AntiSpam'));ensure('AntiSpam').entries.forEach(e=>e.key==='ExemptBits'?checkField(c,'AntiSpam',e.key):textField(c,'AntiSpam',e.key,e.key,'number'));
+    c=card(grid,sectionLabel('Overlay'));['Enabled','ShowTop','ShowRecent','Sound'].forEach(k=>checkField(c,'Overlay',k,k));textField(c,'Overlay','RecentMinutes','RecentMinutes','number');const volume=input(get('Overlay','SoundVolume'),'range');volume.min='0';volume.max='100';const out=node('output',null,volume.value+'%');volume.addEventListener('input',()=>{out.textContent=volume.value+'%';set('Overlay','SoundVolume',volume.value);});const vw=node('div','inline');add(vw,volume,out);field(c,'SoundVolume',vw,'Overlay.SoundVolume');textField(c,'Overlay','SoundFile');textField(c,'Overlay','Port','Port','text',true);c.append(node('p','hint',t('portHint')));
+  }
+  function renderRewards(root){const grid=node('div','grid');root.append(grid);mappingRows(grid,'Rewards',sectionLabel('Rewards'),{cost:true,wide:true,keyLabel:t('title')});const c=card(grid,sectionLabel('Twitch'));checkField(c,'Twitch','CreateRewards');mappingRows(grid,'Bits',sectionLabel('Bits'),{numeric:true,wide:true,keyLabel:t('threshold')});}
+  function renderChat(root){const grid=node('div','grid');root.append(grid);mappingRows(grid,'Chat',sectionLabel('Chat'),{wide:true,keyLabel:t('command')});}
+  function renderPolls(root){const grid=node('div','grid');root.append(grid);mappingRows(grid,'Poll',sectionLabel('Poll'),{wide:true,keyLabel:t('title')});const c=card(grid,sectionLabel('AutoPoll'),true);checkField(c,'AutoPoll','Enabled');['IntervalMin','DurationSec','Choices','MinVotes'].forEach(k=>textField(c,'AutoPoll',k,k,'number'));add(c,add(node('h3'),caption('AutoPoll.Pool','Pool')),actionChecks(get('AutoPoll','Pool'),v=>set('AutoPoll','Pool',v)));}
+  function topLevelComma(v){let depth=0;for(const ch of v){if(ch==='(')depth++;else if(ch===')')depth--;else if(ch===','&&depth===0)return true;}return false;}
+  function parsePart(v){const text=v.trim();let m=/^FORCE1\|([^|]+)$/.exec(text);if(m&&IDS.includes(m[1]))return {kind:'force',target:m[1],mode:'once',a:'',b:''};m=/^(RANDOM\(([^()]*)\)|[A-Z0-9_]+)(?:\|(\/\d+|\d+)\|(\d+))?$/.exec(text);if(!m)return null;let kind='action',target=m[1];if(m[2]!==undefined){target=m[2];kind=target.includes(',')?'list':'pool';}else if(!IDS.includes(target))return null;return {kind,target,mode:m[3]?(m[3].startsWith('/')?'per':'range'):'once',a:m[3]?.replace('/','')||'',b:m[4]||''};}
+  function parseTier(v){if(topLevelComma(v))return null;const parts=v.split(/\s*\+\s*/).map(parsePart);return parts.every(Boolean)?parts:null;}
+  function serializePart(p){const target=p.kind==='action'?p.target:p.kind==='force'?`FORCE1|${p.target}`:`RANDOM(${p.target})`;if(p.kind==='force'||p.mode==='once')return target;return `${target}|${p.mode==='per'?'/':''}${p.a}|${p.b}`;}
+  function tiers(parent){const box=card(parent,sectionLabel('RaidTiers'),true),list=node('div'),preview=node('div','card wide');box.append(list);parent.append(preview);
+    function drawPreview(){preview.replaceChildren();const entries=ensure('RaidTiers').entries;
+      entries.forEach(e=>{const start=Number(e.key),next=Math.min(...entries.map(x=>Number(x.key)).filter(x=>Number.isFinite(x)&&x>start)),end=Number.isFinite(next)?next-1:start,parts=parseTier(e.value);
+        if(!numeric(e.key)||!parts||parts.some(p=>p.mode!=='once'&&(!numeric(p.a,true)||!numeric(p.b,true)))){preview.append(node('p','tier-preview',t('previewUnavailable')));return;}
+        const names=parts.map(p=>{const name=p.kind==='pool'?`${t('fromPool')} ${p.target} (${(entry('RaidPools',p.target)?.value||'').split(',').map(x=>actionName(x.trim())).filter(Boolean).join(', ')})`:p.kind==='list'?`${t('fromList')} ${p.target.split(',').map(x=>actionName(x.trim())).join(', ')}`:actionName(p.target);
+          if(p.kind==='force')return `${name} ${t('instant')}`;
+          if(p.mode==='once')return name;
+          const amount=viewers=>p.mode==='per'?Math.min(Number(p.b),Math.max(1,Math.floor(viewers/Number(p.a)))):Number.isFinite(next)&&next>start?Math.min(Number(p.b),Math.max(1,Number(p.a)+Math.floor(((viewers-start)*(Number(p.b)-Number(p.a))+(next-start)/2)/(next-start)))):Number(p.a);
+          const low=amount(start),high=amount(end);return `${name} ${low===high?low:`${low}-${high}`}`;
+        });
+        // ASVS 1.2.1: render configured names as text, never as HTML.
+        preview.append(node('p','tier-preview',`${e.key}${end>start?`-${end}`:''} ${t('viewers')}: ${names.join('; ')}`));
+      });
+    }
+    function draw(){list.replaceChildren();ensure('RaidTiers').entries.forEach((e,i)=>{const wrap=node('div','tier'),top=node('div','tier-top'),key=input(e.key,'number'),threshold=node('label','tier-threshold');key.min='0';key.addEventListener('input',()=>{e.key=key.value;changed();drawPreview();});add(threshold,node('span',null,t('from')),key,node('span',null,t('viewers')));top.append(threshold);const parts=parseTier(e.value);if(!parts){const raw=input(e.value);raw.addEventListener('input',()=>{e.value=raw.value;changed();drawPreview();});top.append(raw);}else top.append(node('span','hint',t('parts')));top.append(button('×',()=>{section('RaidTiers').entries.splice(i,1);changed();draw();},'mini danger'));wrap.append(top);
+      if(parts){const update=()=>{e.value=parts.map(serializePart).join(' + ');changed();drawPreview();};parts.forEach((p,j)=>{const row=node('div','part'),kind=select([['action',t('action')],['pool',t('fromPool')],['list',t('fromList')],['force',t('force')]],p.kind,v=>{p.kind=v;p.target=v==='pool'?(section('RaidPools')?.entries[0]?.key||''):v==='list'?`${IDS[0]}, ${IDS[1]}`:IDS[0];if(v==='force')p.mode='once';update();draw();});row.append(kind);
+        if(p.kind==='action'||p.kind==='force')row.append(actionSelect(p.target,v=>{p.target=v;update();}));else if(p.kind==='pool')row.append(select((section('RaidPools')?.entries||[]).map(x=>[x.key,x.key]).concat([[p.target,p.target]]),p.target,v=>{p.target=v;update();}));else{const target=input(p.target);target.addEventListener('input',()=>{p.target=target.value;update();});row.append(target);}
+        if(p.kind==='force')row.append(node('span'));else{const counts=node('div','part-count'),mode=select([['once',t('once')],['range',t('range')],['per',t('per')]],p.mode,v=>{p.mode=v;if(v!=='once'){p.a||='1';p.b||='10';}update();draw();});counts.append(mode);if(p.mode!=='once'){const a=input(p.a,'number'),b=input(p.b,'number');a.min=b.min='1';a.addEventListener('input',()=>{p.a=a.value;update();});b.addEventListener('input',()=>{p.b=b.value;update();});const first=node('label'),second=node('label');add(first,node('span',null,p.mode==='per'?'N':t('minLabel')),a);add(second,node('span',null,p.mode==='per'?t('perMax'):t('maxLabel')),b);counts.append(first,second);}row.append(counts);}
+        row.append(button('×',()=>{parts.splice(j,1);update();draw();},'mini danger'));wrap.append(row);});wrap.append(button(t('addPart'),()=>{parts.push({kind:'action',target:IDS[0],mode:'once',a:'',b:''});update();draw();},'quiet'));}
+      list.append(wrap);});drawPreview();}
+    draw();box.append(button(t('add'),()=>{ensure('RaidTiers').entries.push({key:'',value:IDS[0]});changed();draw();}));return drawPreview;}
+  function pools(parent,onChange){const box=card(parent,sectionLabel('RaidPools'),true),list=node('div');box.append(list);function draw(){list.replaceChildren();ensure('RaidPools').entries.forEach((e,i)=>{const wrap=node('div','tier'),name=input(e.key);name.addEventListener('input',()=>{e.key=name.value;changed();onChange();});wrap.append(field(node('div'),t('title'),name));wrap.append(actionChecks(e.value,v=>{e.value=v;changed();onChange();}));wrap.append(button(t('delete'),()=>{section('RaidPools').entries.splice(i,1);changed();draw();onChange();},'mini danger'));list.append(wrap);});}draw();box.append(button(t('add'),()=>{ensure('RaidPools').entries.push({key:'',value:''});changed();draw();onChange();}));}
+  function renderRaids(root){const grid=node('div','grid');root.append(grid);const c=card(grid,sectionLabel('Events'),true);ensure('Events').entries.forEach(e=>{if(['RaidMinViewers','GiftSubPerGift','GiftSubMax'].includes(e.key))textField(c,'Events',e.key,e.key,'number');else field(c,e.key,actionEditor(e.value,v=>set('Events',e.key,v)),`Events.${e.key}`);});pools(grid,tiers(grid));mappingRows(grid,'RaidNotices',sectionLabel('RaidNotices'),{text:true,numeric:true,wide:true});const scale=card(grid,sectionLabel('RaidScaling'),true);checkField(scale,'RaidScaling','Enabled');textField(scale,'RaidScaling','DragonMinLevel','DragonMinLevel','number');const list=node('div');scale.append(list);function draw(){list.replaceChildren();ensure('RaidScaling').entries.filter(e=>!['Enabled','DragonMinLevel'].includes(e.key)).forEach(e=>{const row=node('div','row two'),key=input(e.key,'number'),val=input(e.value,'number'),keyBox=node('div');let name=caption(`RaidScaling.${e.key}`,e.key);add(keyBox,name,key);key.addEventListener('input',()=>{e.key=key.value;const next=caption(`RaidScaling.${e.key}`,e.key);name.replaceWith(next);name=next;changed();});val.step='any';val.addEventListener('input',()=>{e.value=val.value;changed();});add(row,keyBox,val,button('×',()=>{remove('RaidScaling',e.key);draw();},'mini danger'));list.append(row);});}draw();scale.append(button(t('add'),()=>{ensure('RaidScaling').entries.push({key:'',value:'1'});changed();draw();}));}
+  function renderTexts(root){root.append(node('p','hint',t('textHint')));[['Messages',sectionLabel('Messages')],['ChatReplies',sectionLabel('ChatReplies')]].forEach(([name,label],index)=>{const d=node('details','text-group');d.open=index===0;d.append(node('summary',null,label));ensure(name).entries.forEach(e=>textField(d,name,e.key,IDS.includes(e.key)?actionName(e.key):e.key));if(name==='Messages')IDS.filter(id=>!entry('Messages',id)).forEach(id=>textField(d,'Messages',id,actionName(id)));root.append(d);});}
+  function renderAdvanced(root){root.append(node('p','hint',t('advancedHint')));config.sections.forEach((s,si)=>{const box=node('section','card advanced-section'),head=node('div','inline'),title=input(s.name);title.setAttribute('aria-label',t('section'));title.title=sectionLabel(s.name);title.addEventListener('input',()=>{s.name=title.value;title.title=sectionLabel(s.name);changed();});add(head,node('h2',null,t('section')),title,button(t('delete'),()=>{config.sections.splice(si,1);changed();render();},'mini danger'));box.append(head);s.entries.forEach((e,i)=>{const row=node('div','row two'),key=input(e.key),value=input(e.value);key.setAttribute('aria-label',t('key'));key.title=fieldLabel(`${s.name}.${e.key}`,e.key);value.setAttribute('aria-label',t('value'));key.addEventListener('input',()=>{e.key=key.value;key.title=fieldLabel(`${s.name}.${e.key}`,e.key);changed();});value.addEventListener('input',()=>{e.value=value.value;changed();});add(row,key,value,button('×',()=>{s.entries.splice(i,1);changed();render();},'mini danger'));box.append(row);});box.append(button(t('addKey'),()=>{s.entries.push({key:'',value:''});changed();render();},'quiet'));root.append(box);});root.append(button(t('addSection'),()=>{config.sections.push({name:'',entries:[]});changed();render();},'quiet'));}
+  function render(){document.documentElement.lang=lang;$('subtitle').textContent=t('subtitle');$('save').textContent=t('save');$('reload').textContent=t('reload');const nav=$('tabs');nav.replaceChildren();tabs.forEach(name=>{const b=node('button',null,t(name));b.type='button';b.setAttribute('role','tab');b.setAttribute('aria-selected',name===active?'true':'false');b.addEventListener('click',()=>{active=name;render();});nav.append(b);});const root=$('content');root.replaceChildren();({main:renderMain,rewards:renderRewards,chat:renderChat,polls:renderPolls,raids:renderRaids,texts:renderTexts,advanced:renderAdvanced})[active](root);changed();}
+  function numeric(value,positive=false){return /^\d+$/.test(value)&&(!positive||Number(value)>0);}
+  function validate(){const seenSections=new Set();for(const s of config.sections){if(!s.name||/[\r\n\[\]]/.test(s.name))return `${t('invalidSection')}: ${s.name}`;if(seenSections.has(s.name))return `${t('duplicate')}: [${s.name}]`;seenSections.add(s.name);const keys=new Set();for(const e of s.entries){const where=`[${s.name}] ${e.key}`;if(!e.key)return `${t('empty')}: ${where}`;if(/[\r\n]/.test(e.value)||/[\r\n]/.test(e.key))return `${t('badLine')}: ${where}`;if(/[=]/.test(e.key)||/^[;\[]/.test(e.key))return `${t('badKey')}: ${where}`;if(keys.has(e.key))return `${t('duplicate')}: ${where}`;keys.add(e.key);if(s.name==='Chat'&&!e.key.startsWith('!'))return `${t('badCommand')}: ${where}`;if(['Bits','RaidTiers','RaidNotices'].includes(s.name)&&!numeric(e.key))return `${t('number')}: ${where}`;if(s.name==='RaidScaling'&&!['Enabled','DragonMinLevel'].includes(e.key)&&(!numeric(e.key)||!Number.isFinite(Number(e.value))))return `${t('number')}: ${where}`;if(s.name==='RaidTiers'){const parts=parseTier(e.value);if(parts){for(const p of parts){if(p.kind==='pool'&&!entry('RaidPools',p.target))return `${t('badPool')}: ${where}`;if(p.kind==='list'&&!p.target.split(',').map(x=>x.trim()).every(x=>IDS.includes(x)))return `${t('badPool')}: ${where}`;if(p.mode!=='once'){if(!numeric(p.a,true)||!numeric(p.b,true)||Number(p.a)>50||Number(p.b)>50)return `${t('countError')}: ${where}`;if(p.mode==='range'&&Number(p.a)>Number(p.b))return `${t('rangeError')}: ${where}`;}}}}if(['Rewards','Bits','Chat','Poll','Events'].includes(s.name)){const a=parseAction(e.value);if(a.mode==='burst'&&(!numeric(a.count,true)||Number(a.count)>50))return `${t('countError')}: ${where}`;}}}return '';}
+  async function load(){try{let data;if(MOCK){data=JSON.parse($('sample-config').textContent);}else{const r=await fetch('/api/config',{headers:{'X-TDL-Token':TOKEN},cache:'no-store'});if(!r.ok)throw Error(`HTTP ${r.status}`);data=await r.json();}if(!data||!Array.isArray(data.sections))throw Error('Invalid response');config=copy(data);lang=data.lang==='ru'?'ru':'en';baseline=JSON.stringify(config.sections);render();}catch(e){toast(t('loadError')+e.message,true);}}
+  async function save(){const error=validate();if(error){toast(t('invalid')+error,true);return;}const body=JSON.stringify({sections:config.sections});if(new TextEncoder().encode(body).length>256*1024){toast(t('saveError')+'256 KB limit',true);return;}try{if(MOCK){console.log('POST /api/config',body);}else{const r=await fetch('/api/config',{method:'POST',headers:{'X-TDL-Token':TOKEN,'Content-Type':'application/json'},body});const result=await r.json().catch(()=>({}));if(!r.ok||!result.ok)throw Error(result.error||`HTTP ${r.status}`);}baseline=JSON.stringify(config.sections);changed();toast(t(MOCK?'mockOk':'saveOk'));}catch(e){toast(e instanceof TypeError?t('noGame'):t('saveError')+e.message,true);}}
+  $('save').addEventListener('click',save);$('reload').addEventListener('click',()=>{if(config&&JSON.stringify(config.sections)!==baseline&&!confirm(t('reloadAsk')))return;load();});window.addEventListener('beforeunload',e=>{if(config&&JSON.stringify(config.sections)!==baseline){e.preventDefault();e.returnValue=t('leaveAsk');}});
+  // ASVS 1.2.1: render all config values with textContent/value; 2.2.1: validate before POST (server validates again).
+  load();
+})();
+</script>
+</body>
+</html>

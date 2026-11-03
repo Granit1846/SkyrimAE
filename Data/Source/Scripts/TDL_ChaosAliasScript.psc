@@ -169,7 +169,12 @@ Function _StopLowG(Actor akPlayer)
 		Game.SetGameSettingFloat("fJumpHeightMin", _origJump)
 	EndIf
 
-	If akPlayer && NoFallingDamageAbility && akPlayer.HasSpell(NoFallingDamageAbility)
+	Bool gigantNeedsFall = false
+	TDL_Gigant gigant = GetOwningQuest() as TDL_Gigant
+	If gigant
+		gigantNeedsFall = gigant.NeedsFallProtection()
+	EndIf
+	If !gigantNeedsFall && akPlayer && NoFallingDamageAbility && akPlayer.HasSpell(NoFallingDamageAbility)
 		akPlayer.RemoveSpell(NoFallingDamageAbility)
 	EndIf
 
@@ -209,6 +214,7 @@ EndFunction
 
 Function _StopBackfire()
 	_backfireActive = False
+	_UnregisterAnimEvents()
 	_DestroyPushMarker()
 	_UnregisterProjectileHit()
 EndFunction
@@ -371,6 +377,28 @@ Function _RegisterAnimEvents(Actor p)
 	_animRegistered = True
 EndFunction
 
+Function _UnregisterAnimEvents()
+	If _animRegistered
+		UnregisterForAnimationEvent(Game.GetPlayer(), "HitFrame")
+		UnregisterForAnimationEvent(Game.GetPlayer(), "hitFrame")
+		UnregisterForAnimationEvent(Game.GetPlayer(), "SpellCast")
+		UnregisterForAnimationEvent(Game.GetPlayer(), "SpellFire")
+		UnregisterForAnimationEvent(Game.GetPlayer(), "VoiceCast")
+		UnregisterForAnimationEvent(Game.GetPlayer(), "VoiceFire")
+		UnregisterForAnimationEvent(Game.GetPlayer(), "BeginCastRight")
+		UnregisterForAnimationEvent(Game.GetPlayer(), "BeginCastLeft")
+		UnregisterForAnimationEvent(Game.GetPlayer(), "BeginCastVoice")
+		UnregisterForAnimationEvent(Game.GetPlayer(), "bowDraw")
+		UnregisterForAnimationEvent(Game.GetPlayer(), "arrowRelease")
+		UnregisterForAnimationEvent(Game.GetPlayer(), "bowReset")
+		_animRegistered = False
+	EndIf
+EndFunction
+
+Bool Function IsLowGActive()
+	Return _lowGActive
+EndFunction
+
 Event OnProjectileHit(ObjectReference akTarget, Form akSource, Projectile akProjectile)
 	If !_backfireActive
 		Return
@@ -413,19 +441,14 @@ Event OnAnimationEvent(ObjectReference akSource, String asEventName)
 	If asEventName == "HitFrame" || asEventName == "hitFrame"
 		_TryKnockbackEnemyMeleeCrosshair(p)
 
+	ElseIf asEventName == "VoiceCast" || asEventName == "VoiceFire" || asEventName == "BeginCastVoice"
+		_HandleShout(p.GetEquippedShout(), p)
 	ElseIf asEventName == "SpellCast" || asEventName == "SpellFire" || \
-	       asEventName == "VoiceCast" || asEventName == "VoiceFire" || \
-	       asEventName == "BeginCastRight" || asEventName == "BeginCastLeft" || \
-	       asEventName == "BeginCastVoice"
-
-		Form currentSpell = p.GetEquippedSpell(0)
+	       asEventName == "BeginCastRight" || asEventName == "BeginCastLeft"
+		Spell currentSpell = p.GetEquippedSpell(0)
 		If !currentSpell
 			currentSpell = p.GetEquippedSpell(1)
 		EndIf
-		If !currentSpell
-			currentSpell = p.GetEquippedShout()
-		EndIf
-
 		If currentSpell
 			_HandleSpellCast(currentSpell, p)
 		EndIf
@@ -456,6 +479,24 @@ Function _HandleBowAction(Actor p)
 	EndIf
 
 	_TryKnockbackEnemiesSpell(p)
+EndFunction
+
+Function _HandleShout(Shout shoutRef, Actor p)
+	If !_backfireActive || _suppressCast || !shoutRef
+		Return
+	EndIf
+	Float chance = _GetFloatGV(Backfire_ChanceGV, 20.0, 0.0, 100.0)
+	If Utility.RandomFloat(0.0, 100.0) > chance
+		Return
+	EndIf
+	_suppressCast = True
+	BackfireSpell.Cast(p, p)
+	_DoShoutKnockbackSKSE(p)
+	_suppressCast = False
+	If ChaosVFX
+		ChaosVFX.Play(p, 1.2)
+	EndIf
+	Game.ShakeCamera(p, 0.8, 0.4)
 EndFunction
 
 Function _HandleSpellCast(Form akSpell, Actor p)
@@ -537,11 +578,13 @@ Event OnReset()
 		Game.SetGameSettingFloat("fJumpHeightMin", _origJump)
 	EndIf
 
-	If p && NoFallingDamageAbility && p.HasSpell(NoFallingDamageAbility)
+	TDL_Gigant gigant = GetOwningQuest() as TDL_Gigant
+	If (!gigant || !gigant.NeedsFallProtection()) && p && NoFallingDamageAbility && p.HasSpell(NoFallingDamageAbility)
 		p.RemoveSpell(NoFallingDamageAbility)
 	EndIf
 
 	_nextKnockbackRT = 0.0
+	_UnregisterAnimEvents()
 	_DestroyPushMarker()
 	_UnregisterProjectileHit()
 
@@ -560,6 +603,11 @@ EndEvent
 
 Event OnPlayerLoadGame()
 	_RegisterFastTravel()
+	Quest q = GetOwningQuest()
+	TDL_Comedy comedy = q as TDL_Comedy
+	If comedy
+		comedy.EndTransientOnLoad()
+	EndIf
 	; Timed chaos uses real time, which restarts with the game; game settings are reset too, so end them cleanly
 	Actor p = Game.GetPlayer()
 	If _lowGActive
@@ -568,8 +616,29 @@ Event OnPlayerLoadGame()
 	If _backfireActive
 		_StopBackfire()
 	EndIf
-	TDL_Teleport tp = GetOwningQuest() as TDL_Teleport
+	TDL_Gigant gigant = q as TDL_Gigant
+	If gigant
+		gigant.EndTransientOnLoad()
+	EndIf
+	TDL_Hunter hunter = q as TDL_Hunter
+	If hunter
+		hunter.EndTransientOnLoad()
+	EndIf
+	TDL_Virus virus = q as TDL_Virus
+	If virus
+		virus.EndTransientOnLoad()
+	EndIf
+	TDL_Inventory inventory = q as TDL_Inventory
+	If inventory
+		inventory.EndTransientOnLoad()
+	EndIf
+	TDL_Summoning summons = q as TDL_Summoning
+	If summons
+		summons.EndTransientOnLoad()
+	EndIf
+	TDL_Teleport tp = q as TDL_Teleport
 	If tp
+		tp.EndTransientOnLoad()
 		tp.RespawnOnGameLoad()
 	EndIf
 EndEvent

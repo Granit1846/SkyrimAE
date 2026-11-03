@@ -161,18 +161,37 @@ Bool Function HandleSliderOpen(SKI_ConfigBase mcm, Int option)
 
 	; ===== SCATTER (Stage 80) =====
 	If option == OID_ExactCount
+		If InvSpam_RollsGV != None
+			mcm.SetSliderDialogStartValue(InvSpam_RollsGV.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(0)
 		mcm.SetSliderDialogRange(0, 2000)
 		mcm.SetSliderDialogInterval(1)
 		Return True
 	EndIf
 
 	If option == OID_MinCount || option == OID_MaxCount
+		If option == OID_MinCount
+			If InvSpam_CountMinGV != None
+				mcm.SetSliderDialogStartValue(InvSpam_CountMinGV.GetValue())
+			EndIf
+			mcm.SetSliderDialogDefaultValue(150)
+		ElseIf option == OID_MaxCount
+			If InvSpam_CountMaxGV != None
+				mcm.SetSliderDialogStartValue(InvSpam_CountMaxGV.GetValue())
+			EndIf
+			mcm.SetSliderDialogDefaultValue(200)
+		EndIf
 		mcm.SetSliderDialogRange(1, 2000)
 		mcm.SetSliderDialogInterval(1)
 		Return True
 	EndIf
 
 	If option == OID_Radius
+		If InvSpam_RadiusGV != None
+			mcm.SetSliderDialogStartValue(InvSpam_RadiusGV.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(800)
 		mcm.SetSliderDialogRange(100, 5000)
 		mcm.SetSliderDialogInterval(50)
 		Return True
@@ -180,18 +199,30 @@ Bool Function HandleSliderOpen(SKI_ConfigBase mcm, Int option)
 
 	; ===== DROP ALL (Stage 81) =====
 	If option == OID_DropBatch
+		If InvDrop_BatchSizeGV != None
+			mcm.SetSliderDialogStartValue(InvDrop_BatchSizeGV.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(10)
 		mcm.SetSliderDialogRange(1, 100)
 		mcm.SetSliderDialogInterval(1)
 		Return True
 	EndIf
 
 	If option == OID_DropInterval
+		If InvDrop_IntervalGV != None
+			mcm.SetSliderDialogStartValue(InvDrop_IntervalGV.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(0.20)
 		mcm.SetSliderDialogRange(0.05, 1.0)
 		mcm.SetSliderDialogInterval(0.01)
 		Return True
 	EndIf
 
 	If option == OID_Timeout
+		If InvDrop_TimeoutGV != None
+			mcm.SetSliderDialogStartValue(InvDrop_TimeoutGV.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(30)
 		mcm.SetSliderDialogRange(5, 120)
 		mcm.SetSliderDialogInterval(1)
 		Return True

@@ -1,11 +1,12 @@
-TDL - Twitch Dragonborn Legacy 1.2.0
-====================================
+TDL - Twitch Dragonborn Legacy 1.3.0-beta
+=========================================
 
 I tuoi spettatori di Twitch controllano Skyrim: ricompense con punti canale, bit, comandi di chat
 e sondaggi scatenano draghi, cacciatori, maledizioni, teletrasporti, meteo e molto altro.
 Dalla versione 1.1 la mod si connette a Twitch autonomamente – niente Streamer.bot, nessun programma aggiuntivo.
 
 Documentazione completa: Data\TDL\Documentation (inglese + russo).
+Novità 1.3 (beta): pagina impostazioni nel browser (MCM -> About), Arena 2.0 - sala propria, gong, scrigno premio
 Novità 1.2: overlay OBS, risposte in chat, pausa, anti-spam, statistiche, raid/abbonamenti/hype train,
 votazioni in chat, segnale sonoro - vedi Documentation\9_twitch_dragonborn_legacy_stream_features.md
 

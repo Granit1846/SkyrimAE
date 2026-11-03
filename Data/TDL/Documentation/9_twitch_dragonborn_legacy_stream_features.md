@@ -352,6 +352,52 @@ The TDL overlay can play an audio alert whenever a new action appears in the Rec
 
 ---
 
+### 11. Settings page (no more manual INI editing)
+
+TDL 1.3.0 can serve a local settings page to your default web browser while Skyrim is running:
+
+`http://127.0.0.1:8645/settings`
+
+The port is `[Overlay] Port`. If you changed that setting, use your port in the address.
+
+Open the page in one of three ways:
+
+- MCM -> Twitch Dragonborn Legacy -> About -> "Open Twitch settings".
+- In chat: `!tdl settings` (broadcaster only; opens the browser on the streamer PC).
+- Type the address into a browser and bookmark it.
+
+The page works only while the game is running. If the game is closed, it shows "No connection to the game". It is local-only, so open it on the same PC as the game.
+
+Tabs and what they are for:
+
+| Tab | What it is for |
+| --- | --- |
+| Main | Twitch on/off, notifications, chat permissions, poll name, pause and pause mode; safety blocked actions and allow force from viewers; anti-spam numbers; overlay and sound; port read-only. |
+| Rewards & bits | Reward rows: title + action value + cost from `[RewardCosts]`, plus delete/add; CreateRewards toggle; bits rows: minimum bits + action value. |
+| Chat commands | Command rows: command (must start with `!`) + action value. |
+| Polls | Poll rows: choice title + action value; auto-poll enabled, interval, duration, choices, minimum votes, and action pool. |
+| Raids & events | Event keys as action values; the raid tier editor with live preview per tier; raid pools, raid notices, and raid scaling. |
+| Texts | Messages per action and chat replies, inside collapsible groups. |
+| Advanced | Every section/key as plain `key=value` fields, including unknown sections. |
+
+The action value editor is used in rewards, bits, chat commands, polls, and events. You can choose:
+
+- one action;
+- several actions as a random pick, stored as `A, B, C`;
+- a burst `FORCE|ACTION|COUNT`, with count from 1 to 50.
+
+If an existing value cannot be parsed into these forms, the page shows a raw text field instead. Action pickers use friendly labels when available and fall back to the action ID.
+
+"Save and apply" writes `TDL_Twitch.ini`. Changes apply immediately in the game, and comments in the file are kept. Before the first save of each session, the mod creates a backup: `TDL_Twitch.ini.bak`. "Reload from file" reloads values from the file. The page shows an unsaved-changes indicator and asks for confirmation before leaving with unsaved changes.
+
+Only pages opened from this address can change settings. A random session key protects the page from other websites, and the server listens only on this PC (`127.0.0.1`).
+
+Client-side validation blocks saving on duplicate keys, empty keys, chat commands without `!`, non-numeric thresholds, `MIN > MAX`, and counts out of range, with clear messages.
+
+The Advanced tab is raw key/value editing for experts; manual INI editing still works.
+
+---
+
 # Русская версия
 
 Руководство пользователя по стрим-функциям TDL 1.2.0 для Skyrim Special Edition. Мод работает напрямую с Twitch через SKSE-плагин (без Streamer.bot). Все настройки находятся в файле `Data/SKSE/Plugins/TDL_Twitch.ini` (кодировка UTF-8) и подхватываются на лету во время игры без перезапуска.
@@ -703,3 +749,43 @@ TDL динамически масштабирует события Twitch-рей
 
 > [!TIP]
 > **Настройка в OBS Studio:** В свойствах источника «Браузер» (Browser Source) для `TDL_Overlay.html` включите пункт **«Управление звуком через OBS»** (*Control audio via OBS*). Это выведет звук оверлея в микшер аудио OBS, позволяя настроить громкость, слушать сигнал в наушниках через мониторинг и передавать его на трансляцию.
+
+### 11. Страница настроек (без ручной правки ini)
+
+TDL 1.3.0 может отдавать локальную страницу настроек в браузер по умолчанию, пока Skyrim запущен:
+
+`http://127.0.0.1:8645/settings`
+
+Порт берётся из `[Overlay] Port`. Если вы его меняли, используйте свой порт в адресе.
+
+Открыть страницу можно тремя способами:
+
+- MCM -> Twitch Dragonborn Legacy -> About -> «Open Twitch settings».
+- В чате: `!tdl settings` (только для стримера; открывает браузер на ПК стримера).
+- Ввести адрес в браузере и добавить в закладки.
+
+Страница работает только пока игра запущена. Если игра закрыта, она показывает «No connection to the game». Страница локальная, поэтому открывайте её на том же ПК, где запущена игра.
+
+Вкладки и их назначение:
+
+| Вкладка | Для чего |
+| --- | --- |
+| Main | Twitch вкл/выкл, уведомления, доступ к чату, имя опроса, пауза и режим паузы; безопасность: заблокированные действия и разрешение force от зрителей; числа антиспама; оверлей и звук; порт только для чтения. |
+| Rewards & bits | Строки наград: название + значение действия + стоимость из `[RewardCosts]`, а также удаление/добавление; переключатель CreateRewards; строки bits: минимум bits + значение действия. |
+| Chat commands | Строки команд: команда (должна начинаться с `!`) + значение действия. |
+| Polls | Строки опроса: вариант + значение действия; автопрос: включение, интервал, длительность, число вариантов, минимум голосов и пул действий. |
+| Raids & events | Ключи событий как значения действий; редактор уровней рейдов с живым предпросмотром для каждого уровня; пулы рейдов, уведомления и масштабирование рейдов. |
+| Texts | Сообщения для каждого действия и ответы чата — в сворачиваемых группах. |
+| Advanced | Все секции/ключи как простые поля `key=value`, включая неизвестные секции. |
+
+Редактор значений действий используется в наградах, bits, командах чата, опросах и событиях. Можно выбрать:
+
+- одно действие;
+- несколько действий как случайный выбор, хранится как `A, B, C`;
+- серию `FORCE|ACTION|COUNT`, где количество от 1 до 50.
+
+Если существующее значение не удаётся разобрать в эти формы, страница показывает обычное текстовое поле. В выборе действий используются понятные подписи, если они есть; иначе показывается ID действия.
+
+«Save and apply» записывает `TDL_Twitch.ini`. Изменения сразу применяются в игре, комментарии в файле сохраняются. Перед первым сохранением за сеанс мод создаёт резервную копию: `TDL_Twitch.ini.bak`. «Reload from file» перечитывает значения из файла. Страница показывает индикатор несохранённых изменений и спрашивает подтверждение перед уходом с несохранёнными изменениями.
+
+Только страницы, открытые по этому адресу, могут менять

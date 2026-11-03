@@ -88,12 +88,20 @@ EndFunction
 Bool Function HandleSliderOpen(SKI_ConfigBase mcm, Int option)
 
 	If option == OID_WW_Duration
+		If Virus_WerewolfDurationGV != None
+			mcm.SetSliderDialogStartValue(Virus_WerewolfDurationGV.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(150)
 		mcm.SetSliderDialogRange(5, 600)
 		mcm.SetSliderDialogInterval(5)
 		Return True
 	EndIf
 
 	If option == OID_WW_DamageMult
+		If Virus_WerewolfDamageMultGV != None
+			mcm.SetSliderDialogStartValue(Virus_WerewolfDamageMultGV.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(1.5)
 		mcm.SetSliderDialogRange(0.1, 3.0)
 		mcm.SetSliderDialogInterval(0.1)
 		Return True

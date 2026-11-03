@@ -2,6 +2,7 @@ ScriptName TDL_MCM_About extends SKI_ConfigBase
 
 Spell Property TDL_MenuAbility Auto
 
+Int OID_OpenSettings = -1
 Int OID_QMStatus = -1
 Int OID_QMAdd = -1
 Int OID_QMRemove = -1
@@ -12,10 +13,11 @@ Function BuildPage(SKI_ConfigBase mcm)
 
 	mcm.SetCursorPosition(0)
 	mcm.AddHeaderOption("$TDLAboutHeader")
-	mcm.AddTextOption("$TDLAboutModVersion", "1.2.0")
+	mcm.AddTextOption("$TDLAboutModVersion", "1.3.0-beta")
 	mcm.AddTextOption("$TDLAboutMCMVersion", "27")
 	mcm.AddTextOption("$TDLAboutActiveFunctions", "45")
 	mcm.AddTextOption("$TDLAboutAuthor", "Skeorz")
+	OID_OpenSettings = mcm.AddTextOption("$TDLAboutOpenTwitchSettings", "$ActionOpen")
 
 	mcm.SetCursorPosition(1)
 	mcm.AddHeaderOption("$TDLAboutQuickMenuHeader")
@@ -26,6 +28,13 @@ Function BuildPage(SKI_ConfigBase mcm)
 EndFunction
 
 Bool Function HandleOptionSelect(SKI_ConfigBase mcm, Int option)
+	If option == OID_OpenSettings
+		If !TDL_Native.OpenSettings()
+			mcm.ShowMessage("$TDLSettingsUnavailable")
+		EndIf
+		Return True
+	EndIf
+
 	Actor p = Game.GetPlayer()
 	If p == None
 		Return False

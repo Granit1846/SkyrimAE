@@ -1,5 +1,7 @@
 // src/TDL_Overlay.h
 #pragma once
 
-// Starts the local overlay server for OBS (http://127.0.0.1:<port>/). Settings: [Overlay] in TDL_Twitch.ini.
+// Starts the local overlay and settings server on [Overlay] Port, even when the overlay display is disabled.
 void TDL_StartOverlay();
+int TDL_OverlayPort();
+bool TDL_OpenSettings();

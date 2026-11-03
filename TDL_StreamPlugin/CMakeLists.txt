@@ -20,7 +20,7 @@ add_commonlibsse_plugin(${PROJECT_NAME}
         ${CMAKE_CURRENT_SOURCE_DIR}/src/TDL_Overlay.cpp
 )
 
-target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann_json::nlohmann_json winhttp crypt32 shell32 ole32 ws2_32)
+target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann_json::nlohmann_json winhttp crypt32 bcrypt shell32 ole32 ws2_32)
 
 # Force-include PCH.h into every translation unit
 target_compile_options(${PROJECT_NAME} PRIVATE "/FI${CMAKE_CURRENT_SOURCE_DIR}/PCH.h")

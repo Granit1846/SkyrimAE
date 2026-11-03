@@ -1,8 +1,9 @@
-﻿// src/main.cpp
+// src/main.cpp
 #include "TDL_PipeServer.h"
 #include "TDL_Overlay.h"
 #include "TDL_Twitch.h"
 #include <SKSE/SKSE.h>
+#include <RE/N/NativeFunction.h>  // defines IVirtualMachine::RegisterFunction
 
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/spdlog.h>
@@ -28,10 +29,25 @@ static void SetupLog()
 	spdlog::info("TDL_StreamPlugin: logger initialized");
 }
 
+static bool OpenSettings(RE::StaticFunctionTag*)
+{
+	return TDL_OpenSettings();
+}
+
+static bool RegisterPapyrus(RE::BSScript::IVirtualMachine* vm)
+{
+	vm->RegisterFunction("OpenSettings", "TDL_Native", OpenSettings);
+	return true;
+}
+
 SKSEPluginLoad(const SKSE::LoadInterface* skse)
 {
 	SKSE::Init(skse);
 	SetupLog();
+	if (auto* papyrus = SKSE::GetPapyrusInterface(); !papyrus || !papyrus->Register(RegisterPapyrus)) {
+		spdlog::error("TDL_StreamPlugin: Papyrus registration failed");
+		return false;
+	}
 
 	if (auto* msg = SKSE::GetMessagingInterface(); msg) {
 		msg->RegisterListener([](SKSE::MessagingInterface::Message* m) {

@@ -101,60 +101,126 @@ EndFunction
 Bool Function HandleSliderOpen(SKI_ConfigBase mcm, Int option)
 
 	If option == OID_Bursts
+		If Wrath_TotalBurstsGV != None
+			mcm.SetSliderDialogStartValue(Wrath_TotalBurstsGV.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(6)
 		mcm.SetSliderDialogRange(1, 50)
 		mcm.SetSliderDialogInterval(1)
 		Return True
 	EndIf
 
 	If option == OID_Interval
+		If Wrath_EffectIntervalGV != None
+			mcm.SetSliderDialogStartValue(Wrath_EffectIntervalGV.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(0.4)
 		mcm.SetSliderDialogRange(0.05, 2.0)
 		mcm.SetSliderDialogInterval(0.05)
 		Return True
 	EndIf
 
 	If option == OID_Radius
+		If Wrath_RadiusGV != None
+			mcm.SetSliderDialogStartValue(Wrath_RadiusGV.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(300)
 		mcm.SetSliderDialogRange(100, 2000)
 		mcm.SetSliderDialogInterval(50)
 		Return True
 	EndIf
 
 	If option == OID_ZOffset
+		If Wrath_ZOffsetGV != None
+			mcm.SetSliderDialogStartValue(Wrath_ZOffsetGV.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(50)
 		mcm.SetSliderDialogRange(0, 500)
 		mcm.SetSliderDialogInterval(10)
 		Return True
 	EndIf
 
 	If option == OID_DmgMin || option == OID_DmgMax
+		If option == OID_DmgMin
+			If Wrath_DamageMinGV != None
+				mcm.SetSliderDialogStartValue(Wrath_DamageMinGV.GetValue())
+			EndIf
+			mcm.SetSliderDialogDefaultValue(5)
+		ElseIf option == OID_DmgMax
+			If Wrath_DamageMaxGV != None
+				mcm.SetSliderDialogStartValue(Wrath_DamageMaxGV.GetValue())
+			EndIf
+			mcm.SetSliderDialogDefaultValue(15)
+		EndIf
 		mcm.SetSliderDialogRange(1, 100)
 		mcm.SetSliderDialogInterval(1)
 		Return True
 	EndIf
 
 	If option == OID_FireMult || option == OID_StormMagMult || option == OID_FrostStaMult
+		If option == OID_FireMult
+			If Wrath_FireDamageMultGV != None
+				mcm.SetSliderDialogStartValue(Wrath_FireDamageMultGV.GetValue())
+			EndIf
+			mcm.SetSliderDialogDefaultValue(1.0)
+		ElseIf option == OID_StormMagMult
+			If Wrath_StormMagickaMultGV != None
+				mcm.SetSliderDialogStartValue(Wrath_StormMagickaMultGV.GetValue())
+			EndIf
+			mcm.SetSliderDialogDefaultValue(1.0)
+		ElseIf option == OID_FrostStaMult
+			If Wrath_FrostStaminaMultGV != None
+				mcm.SetSliderDialogStartValue(Wrath_FrostStaminaMultGV.GetValue())
+			EndIf
+			mcm.SetSliderDialogDefaultValue(1.0)
+		EndIf
 		mcm.SetSliderDialogRange(0.0, 5.0)
 		mcm.SetSliderDialogInterval(0.05)
 		Return True
 	EndIf
 
 	If option == OID_LevelScale
+		If Wrath_LevelScaleGV != None
+			mcm.SetSliderDialogStartValue(Wrath_LevelScaleGV.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(0.0)
 		mcm.SetSliderDialogRange(0.0, 0.10)
 		mcm.SetSliderDialogInterval(0.005)
 		Return True
 	EndIf
 
 	If option == OID_LevelCap
+		If Wrath_LevelCapGV != None
+			mcm.SetSliderDialogStartValue(Wrath_LevelCapGV.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(3.0)
 		mcm.SetSliderDialogRange(1.0, 5.0)
 		mcm.SetSliderDialogInterval(0.1)
 		Return True
 	EndIf
 
 	If option == OID_ShakeChance
+		If Wrath_ShakeChanceGV != None
+			mcm.SetSliderDialogStartValue(Wrath_ShakeChanceGV.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(0)
 		mcm.SetSliderDialogRange(0, 100)
 		mcm.SetSliderDialogInterval(5)
 		Return True
 	EndIf
 
 	If option == OID_ShakeStrength || option == OID_ShakeDuration
+		If option == OID_ShakeStrength
+			If Wrath_ShakeStrengthGV != None
+				mcm.SetSliderDialogStartValue(Wrath_ShakeStrengthGV.GetValue())
+			EndIf
+			mcm.SetSliderDialogDefaultValue(0.0)
+		ElseIf option == OID_ShakeDuration
+			If Wrath_ShakeDurationGV != None
+				mcm.SetSliderDialogStartValue(Wrath_ShakeDurationGV.GetValue())
+			EndIf
+			mcm.SetSliderDialogDefaultValue(0.0)
+		EndIf
 		mcm.SetSliderDialogRange(0.0, 1.0)
 		mcm.SetSliderDialogInterval(0.05)
 		Return True

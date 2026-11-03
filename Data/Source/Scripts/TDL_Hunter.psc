@@ -97,6 +97,10 @@ Function StartHunter()
 EndFunction
 
 
+Function EndTransientOnLoad()
+	Cleanup()
+EndFunction
+
 Function StopHunter()
 	Cleanup()
 EndFunction
