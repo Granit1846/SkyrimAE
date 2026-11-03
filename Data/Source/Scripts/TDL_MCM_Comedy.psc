@@ -18,6 +18,8 @@ GlobalVariable Property ArenaPerWave Auto
 GlobalVariable Property ArenaWaveInterval Auto
 GlobalVariable Property ArenaSpawnRadius Auto
 GlobalVariable Property ArenaTimeoutMinutes Auto ; NEW
+GlobalVariable Property TDL_ArenaPrepSeconds Auto
+GlobalVariable Property TDL_ArenaReturnDelay Auto
 GlobalVariable Property EscortDuration Auto
 
 Int FLAG_HAS_DEFAULT = 16
@@ -43,6 +45,8 @@ Int OID_ArenaPerWave = -1
 Int OID_ArenaWaveInterval = -1
 Int OID_ArenaSpawnRadius = -1
 Int OID_ArenaTimeoutMinutes = -1 ; NEW
+Int OID_ArenaPrepSeconds = -1
+Int OID_ArenaReturnDelay = -1
 Int OID_EscortDuration = -1
 
 Function BuildPage(SKI_ConfigBase mcm)
@@ -78,6 +82,12 @@ Function BuildPage(SKI_ConfigBase mcm)
 	OID_ArenaWaveInterval = mcm.AddSliderOption("$ComedyArenaInterval", ArenaWaveInterval.GetValue(), "{2}", FLAG_HAS_DEFAULT)
 	OID_ArenaSpawnRadius = mcm.AddSliderOption("$ComedyArenaRadius", ArenaSpawnRadius.GetValue(), "{0}", FLAG_HAS_DEFAULT)
 	OID_ArenaTimeoutMinutes = mcm.AddSliderOption("$ComedyArenaTimeoutMinutes", ArenaTimeoutMinutes.GetValue(), "{1}", FLAG_HAS_DEFAULT) ; NEW
+	If TDL_ArenaPrepSeconds
+		OID_ArenaPrepSeconds = mcm.AddSliderOption("$ComedyArenaPrepSeconds", TDL_ArenaPrepSeconds.GetValue(), "{0}", FLAG_HAS_DEFAULT)
+	EndIf
+	If TDL_ArenaReturnDelay
+		OID_ArenaReturnDelay = mcm.AddSliderOption("$ComedyArenaReturnDelay", TDL_ArenaReturnDelay.GetValue(), "{0}", FLAG_HAS_DEFAULT)
+	EndIf
 EndFunction
 
 Bool Function HandleOptionSelect(SKI_ConfigBase mcm, Int option)
@@ -184,6 +194,16 @@ Bool Function HandleSliderAccept(SKI_ConfigBase mcm, Int option, Float value)
 		mcm.SetSliderOptionValue(option, value, "{1}")
 		Return True
 	EndIf
+	If option == OID_ArenaPrepSeconds && TDL_ArenaPrepSeconds
+		TDL_ArenaPrepSeconds.SetValue(value)
+		mcm.SetSliderOptionValue(option, value, "{0}")
+		Return True
+	EndIf
+	If option == OID_ArenaReturnDelay && TDL_ArenaReturnDelay
+		TDL_ArenaReturnDelay.SetValue(value)
+		mcm.SetSliderOptionValue(option, value, "{0}")
+		Return True
+	EndIf
 	If option == OID_EscortDuration
 		EscortDuration.SetValue(value)
 		mcm.SetSliderOptionValue(option, value, "{0}")
@@ -273,6 +293,16 @@ Bool Function HandleOptionDefault(SKI_ConfigBase mcm, Int option)
 		mcm.SetSliderOptionValue(option, 10.0, "{1}")
 		Return True
 	EndIf
+	If option == OID_ArenaPrepSeconds && TDL_ArenaPrepSeconds
+		TDL_ArenaPrepSeconds.SetValue(30.0)
+		mcm.SetSliderOptionValue(option, 30.0, "{0}")
+		Return True
+	EndIf
+	If option == OID_ArenaReturnDelay && TDL_ArenaReturnDelay
+		TDL_ArenaReturnDelay.SetValue(10.0)
+		mcm.SetSliderOptionValue(option, 10.0, "{0}")
+		Return True
+	EndIf
 	If option == OID_EscortDuration
 		EscortDuration.SetValue(120)
 		mcm.SetSliderOptionValue(option, 120, "{0}")
@@ -285,30 +315,57 @@ Bool Function HandleSliderOpen(SKI_ConfigBase mcm, Int option)
 
 	; ===== STAGE 50 — FAKE HERO =====
 	If option == OID_FakeHeroDuration
+		If FakeHeroDuration != None
+			mcm.SetSliderDialogStartValue(FakeHeroDuration.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(120)
 		mcm.SetSliderDialogRange(10, 600)
 		mcm.SetSliderDialogInterval(10)
 		Return True
 	EndIf
 
 	If option == OID_FakeHeroActionInterval
+		If FakeHeroActionInterval != None
+			mcm.SetSliderDialogStartValue(FakeHeroActionInterval.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(3.0)
 		mcm.SetSliderDialogRange(0.5, 10.0)
 		mcm.SetSliderDialogInterval(0.5)
 		Return True
 	EndIf
 
 	If option == OID_FakeHeroDamageMult
+		If FakeHeroDamageMult != None
+			mcm.SetSliderDialogStartValue(FakeHeroDamageMult.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(1.0)
 		mcm.SetSliderDialogRange(0.2, 5.0)
 		mcm.SetSliderDialogInterval(0.1)
 		Return True
 	EndIf
 
 	If option == OID_FakeHeroPushForce
+		If FakeHeroPushForce != None
+			mcm.SetSliderDialogStartValue(FakeHeroPushForce.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(5)
 		mcm.SetSliderDialogRange(0, 50)
 		mcm.SetSliderDialogInterval(1)
 		Return True
 	EndIf
 
 	If option == OID_FakeHeroShoutChance || option == OID_FakeHeroSpellChance
+		If option == OID_FakeHeroShoutChance
+			If FakeHeroShoutChance != None
+				mcm.SetSliderDialogStartValue(FakeHeroShoutChance.GetValue())
+			EndIf
+			mcm.SetSliderDialogDefaultValue(30)
+		ElseIf option == OID_FakeHeroSpellChance
+			If FakeHeroSpellChance != None
+				mcm.SetSliderDialogStartValue(FakeHeroSpellChance.GetValue())
+			EndIf
+			mcm.SetSliderDialogDefaultValue(30)
+		EndIf
 		mcm.SetSliderDialogRange(0, 100)
 		mcm.SetSliderDialogInterval(5)
 		Return True
@@ -316,30 +373,50 @@ Bool Function HandleSliderOpen(SKI_ConfigBase mcm, Int option)
 
 	; ===== STAGE 51 — HORROR =====
 	If option == OID_HorrorDuration
+		If HorrorDuration != None
+			mcm.SetSliderDialogStartValue(HorrorDuration.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(120)
 		mcm.SetSliderDialogRange(10, 600)
 		mcm.SetSliderDialogInterval(10)
 		Return True
 	EndIf
 
 	If option == OID_HorrorSpawnDist
+		If HorrorSpawnDistance != None
+			mcm.SetSliderDialogStartValue(HorrorSpawnDistance.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(800)
 		mcm.SetSliderDialogRange(200, 3000)
 		mcm.SetSliderDialogInterval(100)
 		Return True
 	EndIf
 
 	If option == OID_HorrorTeleportDist
+		If HorrorTeleportDistance != None
+			mcm.SetSliderDialogStartValue(HorrorTeleportDistance.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(600)
 		mcm.SetSliderDialogRange(200, 2000)
 		mcm.SetSliderDialogInterval(100)
 		Return True
 	EndIf
 
 	If option == OID_HorrorMaxDist
+		If HorrorMaxDistance != None
+			mcm.SetSliderDialogStartValue(HorrorMaxDistance.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(3000)
 		mcm.SetSliderDialogRange(1000, 6000)
 		mcm.SetSliderDialogInterval(250)
 		Return True
 	EndIf
 
 	If option == OID_HorrorHealth
+		If HorrorHealth != None
+			mcm.SetSliderDialogStartValue(HorrorHealth.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(300)
 		mcm.SetSliderDialogRange(50, 5000)
 		mcm.SetSliderDialogInterval(50)
 		Return True
@@ -347,37 +424,80 @@ Bool Function HandleSliderOpen(SKI_ConfigBase mcm, Int option)
 
 	; ===== STAGE 52 — ARENA =====
 	If option == OID_ArenaWaves
+		If ArenaWaves != None
+			mcm.SetSliderDialogStartValue(ArenaWaves.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(3)
 		mcm.SetSliderDialogRange(1, 10)
 		mcm.SetSliderDialogInterval(1)
 		Return True
 	EndIf
 
 	If option == OID_ArenaPerWave
+		If ArenaPerWave != None
+			mcm.SetSliderDialogStartValue(ArenaPerWave.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(3)
 		mcm.SetSliderDialogRange(1, 20)
 		mcm.SetSliderDialogInterval(1)
 		Return True
 	EndIf
 
 	If option == OID_ArenaWaveInterval
+		If ArenaWaveInterval != None
+			mcm.SetSliderDialogStartValue(ArenaWaveInterval.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(3.0)
 		mcm.SetSliderDialogRange(0.5, 10.0)
 		mcm.SetSliderDialogInterval(0.5)
 		Return True
 	EndIf
 
 	If option == OID_ArenaSpawnRadius
+		If ArenaSpawnRadius != None
+			mcm.SetSliderDialogStartValue(ArenaSpawnRadius.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(800)
 		mcm.SetSliderDialogRange(200, 3000)
 		mcm.SetSliderDialogInterval(100)
 		Return True
 	EndIf
 
 	If option == OID_ArenaTimeoutMinutes
+		If ArenaTimeoutMinutes != None
+			mcm.SetSliderDialogStartValue(ArenaTimeoutMinutes.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(10.0)
 		mcm.SetSliderDialogRange(5.0, 20.0)
 		mcm.SetSliderDialogInterval(0.5)
 		Return True
 	EndIf
 
+	If option == OID_ArenaPrepSeconds
+		If TDL_ArenaPrepSeconds != None
+			mcm.SetSliderDialogStartValue(TDL_ArenaPrepSeconds.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(30.0)
+		mcm.SetSliderDialogRange(0, 120)
+		mcm.SetSliderDialogInterval(5)
+		Return True
+	EndIf
+	If option == OID_ArenaReturnDelay
+		If TDL_ArenaReturnDelay != None
+			mcm.SetSliderDialogStartValue(TDL_ArenaReturnDelay.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(10.0)
+		mcm.SetSliderDialogRange(0, 60)
+		mcm.SetSliderDialogInterval(1)
+		Return True
+	EndIf
+
 	; ===== STAGE 53 — ESCORT =====
 	If option == OID_EscortDuration
+		If EscortDuration != None
+			mcm.SetSliderDialogStartValue(EscortDuration.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(120)
 		mcm.SetSliderDialogRange(30, 600)
 		mcm.SetSliderDialogInterval(10)
 		Return True

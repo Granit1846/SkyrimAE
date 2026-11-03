@@ -11,6 +11,7 @@
 > - Stages overview: `7_twitch_dragonborn_legacy_description_mods_and_stges.md`  
 > - Changelog & roadmap: `8_twitch_dragonborn_legacy_changelog_roadmap.md` 
 
+> - Stream features (1.2): `9_twitch_dragonborn_legacy_stream_features.md`  
 This document is about expectations and boundaries (not installation).
 
 ---
@@ -63,6 +64,7 @@ TDL focuses on scenarios and events, not on rebalancing the entire game.
 > - Описание стадий: `7_twitch_dragonborn_legacy_description_mods_and_stges.md`  
 > - Changelog и roadmap: `8_twitch_dragonborn_legacy_changelog_roadmap.md`  
 
+> - Стрим-функции (1.2): `9_twitch_dragonborn_legacy_stream_features.md`  
 Этот документ описывает ожидания и границы мода (не установку).
 
 ---

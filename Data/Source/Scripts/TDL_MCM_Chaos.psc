@@ -179,12 +179,20 @@ Bool Function HandleSliderOpen(SKI_ConfigBase mcm, Int option)
 
 	; ===== BACKFIRE =====
 	If option == OID_BackfireChance
+		If Backfire_ChanceGV != None
+			mcm.SetSliderDialogStartValue(Backfire_ChanceGV.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(20)
 		mcm.SetSliderDialogRange(0, 100)
 		mcm.SetSliderDialogInterval(5)
 		Return True
 	EndIf
 
 	If option == OID_BackfireDuration
+		If Backfire_DurationGV != None
+			mcm.SetSliderDialogStartValue(Backfire_DurationGV.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(60)
 		mcm.SetSliderDialogRange(1, 600)
 		mcm.SetSliderDialogInterval(5)
 		Return True
@@ -192,12 +200,20 @@ Bool Function HandleSliderOpen(SKI_ConfigBase mcm, Int option)
 
 	; ===== SHOUT PUSH =====
 	If option == OID_ShoutPushForce
+		If ShoutPushForceGV != None
+			mcm.SetSliderDialogStartValue(ShoutPushForceGV.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(20)
 		mcm.SetSliderDialogRange(0, 200)
 		mcm.SetSliderDialogInterval(5)
 		Return True
 	EndIf
 
 	If option == OID_ShoutPushDelay
+		If ShoutPushDelayGV != None
+			mcm.SetSliderDialogStartValue(ShoutPushDelayGV.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(0.05)
 		mcm.SetSliderDialogRange(0.0, 0.5)
 		mcm.SetSliderDialogInterval(0.01)
 		Return True
@@ -205,18 +221,30 @@ Bool Function HandleSliderOpen(SKI_ConfigBase mcm, Int option)
 
 	; ===== ENEMY KNOCKBACK =====
 	If option == OID_KnockbackForce
+		If KnockbackForceGV != None
+			mcm.SetSliderDialogStartValue(KnockbackForceGV.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(25)
 		mcm.SetSliderDialogRange(0, 200)
 		mcm.SetSliderDialogInterval(5)
 		Return True
 	EndIf
 
 	If option == OID_KnockbackCooldown
+		If KnockbackCooldownGV != None
+			mcm.SetSliderDialogStartValue(KnockbackCooldownGV.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(0.35)
 		mcm.SetSliderDialogRange(0.0, 2.0)
 		mcm.SetSliderDialogInterval(0.05)
 		Return True
 	EndIf
 
 	If option == OID_KnockbackRadius
+		If KnockbackRadiusGV != None
+			mcm.SetSliderDialogStartValue(KnockbackRadiusGV.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(900)
 		mcm.SetSliderDialogRange(0, 20000)
 		mcm.SetSliderDialogInterval(100)
 		Return True
@@ -224,11 +252,19 @@ Bool Function HandleSliderOpen(SKI_ConfigBase mcm, Int option)
 
 	; ===== MELEE =====
 	If option == OID_KnockbackMeleeDelay
+		If KnockbackMeleeDelayGV != None
+			mcm.SetSliderDialogStartValue(KnockbackMeleeDelayGV.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(0.10)
 		mcm.SetSliderDialogRange(0.0, 0.5)
 		mcm.SetSliderDialogInterval(0.01)
 		Return True
 	EndIf
 	If option == OID_KnockbackBowDelay
+		If KnockbackBowDelayGV != None
+			mcm.SetSliderDialogStartValue(KnockbackBowDelayGV.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(0.10)
 		mcm.SetSliderDialogRange(0.0, 0.5)
 		mcm.SetSliderDialogInterval(0.01)
 		Return True

@@ -11,6 +11,7 @@
 > - Stages overview: `7_twitch_dragonborn_legacy_description_mods_and_stges.md`  
 > - Changelog & roadmap: `8_twitch_dragonborn_legacy_changelog_roadmap.md`   
 
+> - Stream features (1.2): `9_twitch_dragonborn_legacy_stream_features.md`  
 This document tracks the current state of the mod and the direction of development.  
 Stages overview: `7_twitch_dragonborn_legacy_description_mods_and_stges.md`.
 
@@ -21,6 +22,19 @@ TDL evolves gradually and deliberately: the priorities are stability, controllab
 ---
 
 ## Current version
+
+### Version 1.2.0 — Stream features
+
+- **OBS overlay**: queue, current action, recent actions, top viewers, chat vote, PAUSED badge; works as an OBS *Local file* (connects by itself when the game starts); recent items expire (RecentMinutes)
+- **Chat replies** and !tdl help; **automatic refunds** of channel points for rejected actions and **auto-created rewards** (Affiliate/Partner)
+- **Streamer pause**: !tdl pause / !tdl resume or Paused=1; PauseMode=cancel (reject) or hold (queue and run after resume)
+- **Stream-safe defaults** ([Safety]): werewolf, vampire lord and "drop all" blocked for viewers; FORCE from viewers off
+- **Anti-spam** ([AntiSpam]): per-viewer cooldown, queue limit, duplicate filter
+- **Viewer stats**: !tdl me, !tdl top, saved between sessions
+- **Raids, subs, hype train** ([Events]); **raid progression** ([RaidTiers], [RaidPools], [RaidNotices]): heal before every raid, enemies by raid size, wrath from 71 viewers, blessing + dragons from 201; scaled by player level ([RaidScaling], dragons from level 20); test with !tdl raid <viewers>
+- **Chat voting** ([AutoPoll]): !1/!2/!3, automatic or !tdl poll; works on any account
+- **Sound cue** in the overlay (Sound, SoundVolume, SoundFile)
+- Full guide: 9_twitch_dragonborn_legacy_stream_features.md
 
 ### Version 1.1.8 — Multilingual out of the box
 
@@ -151,6 +165,7 @@ Ideas and suggestions are welcome if they:
 > - Описание стадий: `7_twitch_dragonborn_legacy_description_mods_and_stges.md`  
 > - Changelog и roadmap: `8_twitch_dragonborn_legacy_changelog_roadmap.md`  
 
+> - Стрим-функции (1.2): `9_twitch_dragonborn_legacy_stream_features.md`  
 Этот документ — журнал изменений и план развития.  
 Описание стадий — в `7_twitch_dragonborn_legacy_description_mods_and_stges.md`.
 
@@ -161,6 +176,19 @@ TDL развивается постепенно и осознанно: прио�
 ---
 
 ## Текущая версия
+
+### Версия 1.2.0 — Стрим-функции
+
+- **Оверлей для OBS**: очередь, текущее действие, недавние, топ зрителей, голосование, метка PAUSED; работает как *локальный файл* OBS (сам подключается при запуске игры); недавние пропадают со временем (RecentMinutes)
+- **Ответы в чат** и справка !tdl; **автовозврат баллов** за отклонённые действия и **автосоздание наград** (Affiliate/Partner)
+- **Пауза стримера**: !tdl pause / !tdl resume или Paused=1; PauseMode=cancel (отклонять) или hold (копить и выполнить после снятия паузы)
+- **Безопасные настройки** ([Safety]): оборотень, лорд-вампир и «выбросить всё» закрыты для зрителей; FORCE от зрителей выключен
+- **Анти-спам** ([AntiSpam]): кулдаун на зрителя, лимит очереди, фильтр повторов
+- **Статистика зрителей**: !tdl me, !tdl top, сохраняется между сессиями
+- **Рейды, сабы, hype train** ([Events]); **прогрессия рейдов** ([RaidTiers], [RaidPools], [RaidNotices]): лечение перед каждым рейдом, противники по размеру рейда, гнев с 71 зрителя, благословение и драконы с 201; масштаб по уровню игрока ([RaidScaling], драконы с 20 уровня); проверка: !tdl raid <зрители>
+- **Голосования в чате** ([AutoPoll]): !1/!2/!3, автоматически или !tdl poll; работает на любом аккаунте
+- **Звуковой сигнал** в оверлее (Sound, SoundVolume, SoundFile)
+- Подробно: 9_twitch_dragonborn_legacy_stream_features.md
 
 ### Версия 1.1.8 — Мультиязычность «из коробки»
 

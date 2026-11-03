@@ -11,6 +11,7 @@
 > - Stages overview: `7_twitch_dragonborn_legacy_description_mods_and_stges.md`  
 > - Changelog & roadmap: `8_twitch_dragonborn_legacy_changelog_roadmap.md`  
 
+> - Stream features (1.2): `9_twitch_dragonborn_legacy_stream_features.md`  
 ---
 
 ## Login (once)
@@ -70,6 +71,7 @@ The defaults are Russian - translate them into your stream language.
 > - Описание стадий: `7_twitch_dragonborn_legacy_description_mods_and_stges.md`  
 > - Changelog и roadmap: `8_twitch_dragonborn_legacy_changelog_roadmap.md`  
 
+> - Стрим-функции (1.2): `9_twitch_dragonborn_legacy_stream_features.md`  
 ---
 
 ## Вход (один раз)

@@ -11,6 +11,7 @@
 > - Stages overview: `7_twitch_dragonborn_legacy_description_mods_and_stges.md`  
 > - Changelog & roadmap: `8_twitch_dragonborn_legacy_changelog_roadmap.md`  
 
+> - Stream features (1.2): `9_twitch_dragonborn_legacy_stream_features.md`  
 ---
 
 ## FAQ
@@ -69,6 +70,7 @@ Fixed in 1.1.7 (a short "nudge" when the player stalls mid-air during the low-gr
 > - Описание стадий: `7_twitch_dragonborn_legacy_description_mods_and_stges.md`  
 > - Changelog и roadmap: `8_twitch_dragonborn_legacy_changelog_roadmap.md`  
 
+> - Стрим-функции (1.2): `9_twitch_dragonborn_legacy_stream_features.md`  
 ---
 
 ## FAQ

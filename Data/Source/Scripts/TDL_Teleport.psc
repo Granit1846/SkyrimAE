@@ -211,6 +211,16 @@ Event OnUpdate()
 EndEvent
 
 
+Function EndTransientOnLoad()
+	If _safetyActive
+		Actor p = Game.GetPlayer()
+		If p && TDL_GodBuff
+			p.DispelSpell(TDL_GodBuff)
+		EndIf
+		_ClearSafety()
+	EndIf
+EndFunction
+
 Function _ClearSafety()
 	_safetyActive = false
 	_safetyEndRT = 0.0

@@ -11,6 +11,7 @@
 > - Stages overview: `7_twitch_dragonborn_legacy_description_mods_and_stges.md`  
 > - Changelog & roadmap: `8_twitch_dragonborn_legacy_changelog_roadmap.md`  
 
+> - Stream features (1.2): `9_twitch_dragonborn_legacy_stream_features.md`  
 This document is the single source of truth for installation and prerequisites.
 
 ---
@@ -56,6 +57,7 @@ This document is the single source of truth for installation and prerequisites.
 ## Updates / uninstall
 
 - Back up `TDL_Twitch.ini` if you edited it, then replace the mod in your mod manager. Saves stay compatible.
+- **Updating to 1.2:** the plugin asks for new Twitch permissions (chat replies, rewards, subs, hype train) - a new login code appears once.
 - Uninstalling scenario mods mid-playthrough is not recommended; keep a backup save.
 
 ---
@@ -73,6 +75,7 @@ This document is the single source of truth for installation and prerequisites.
 > - Описание стадий: `7_twitch_dragonborn_legacy_description_mods_and_stges.md`  
 > - Changelog и roadmap: `8_twitch_dragonborn_legacy_changelog_roadmap.md`  
 
+> - Стрим-функции (1.2): `9_twitch_dragonborn_legacy_stream_features.md`  
 Этот документ - основной источник по установке и зависимостям.
 
 ---
@@ -118,4 +121,5 @@ This document is the single source of truth for installation and prerequisites.
 ## Обновление / удаление
 
 - Сохраните копию `TDL_Twitch.ini`, если меняли его, затем замените мод в менеджере. Сохранения совместимы.
+- **Обновление до 1.2:** плагину нужны новые права Twitch (ответы в чат, награды, сабы, hype train) - один раз появится новый код входа.
 - Удалять сценарные моды посреди прохождения не рекомендуется; держите резервное сохранение.

@@ -112,131 +112,86 @@ Event OnPageReset(String page)
 EndEvent
 
 Event OnOptionSelect(Int option)
-	; Route by page: option IDs repeat across pages, so the module chain below can steal Teleport clicks
-	If CurrentPage == "$TDL_PageTeleport"
-		If TeleportModule
-			TeleportModule.HandleOptionSelect(Self, option)
-		EndIf
-		Return
-	EndIf
-    If ChaosModule && ChaosModule.HandleOptionSelect(Self, option)
-        Return
-    EndIf
-    If InventoryModule && InventoryModule.HandleOptionSelect(Self, option)
-        Return
-    EndIf
-    If WrathModule && WrathModule.HandleOptionSelect(Self, option)
-        Return
-    EndIf
-    If SystemModule && SystemModule.HandleOptionSelect(Self, option)
-        Return
-    EndIf
-    If HunterModule && HunterModule.HandleOptionSelect(Self, option)
-        Return
-    EndIf
-    If GigantModule && GigantModule.HandleOptionSelect(Self, option)
-        Return
-    EndIf
-    If ComedyModule && ComedyModule.HandleOptionSelect(Self, option)
-        Return
-    EndIf
-    If VirusModule && VirusModule.HandleOptionSelect(Self, option)
-	 Return
-    EndIf
-    If AboutModule && AboutModule.HandleOptionSelect(Self, option)
-	 Return
+    If CurrentPage == "$TDL_PageChaos" && ChaosModule
+        ChaosModule.HandleOptionSelect(Self, option)
+    ElseIf CurrentPage == "$TDL_PageInventory" && InventoryModule
+        InventoryModule.HandleOptionSelect(Self, option)
+    ElseIf CurrentPage == "$TDL_PageWrath" && WrathModule
+        WrathModule.HandleOptionSelect(Self, option)
+    ElseIf CurrentPage == "$TDL_PageSystem" && SystemModule
+        SystemModule.HandleOptionSelect(Self, option)
+    ElseIf CurrentPage == "$TDL_PageHunter" && HunterModule
+        HunterModule.HandleOptionSelect(Self, option)
+    ElseIf CurrentPage == "$TDL_PageGigant" && GigantModule
+        GigantModule.HandleOptionSelect(Self, option)
+    ElseIf CurrentPage == "$TDL_PageComedy" && ComedyModule
+        ComedyModule.HandleOptionSelect(Self, option)
+    ElseIf CurrentPage == "$TDL_PageVirus" && VirusModule
+        VirusModule.HandleOptionSelect(Self, option)
+    ElseIf CurrentPage == "$TDL_PageTeleport" && TeleportModule
+        TeleportModule.HandleOptionSelect(Self, option)
+    ElseIf CurrentPage == "$TDL_PageAbout" && AboutModule
+        AboutModule.HandleOptionSelect(Self, option)
     EndIf
 EndEvent
 
 Event OnOptionSliderAccept(Int option, Float value)
-	; Route by page: option IDs repeat across pages, so the module chain below can steal Teleport clicks
-	If CurrentPage == "$TDL_PageTeleport"
-		If TeleportModule
-			TeleportModule.HandleSliderAccept(Self, option, value)
-		EndIf
-		Return
-	EndIf
-    If ChaosModule && ChaosModule.HandleSliderAccept(Self, option, value)
-        Return
-    EndIf
-    If InventoryModule && InventoryModule.HandleSliderAccept(Self, option, value)
-        Return
-    EndIf
-    If WrathModule && WrathModule.HandleSliderAccept(Self, option, value)
-        Return
-    EndIf
-    If HunterModule && HunterModule.HandleSliderAccept(Self, option, value)
-        Return
-    EndIf
-    If GigantModule && GigantModule.HandleSliderAccept(Self, option, value)
-        Return
-    EndIf
-    If ComedyModule && ComedyModule.HandleSliderAccept(Self, option, value)
-        Return
-    EndIf
-    If VirusModule && VirusModule.HandleSliderAccept(Self, option, value)
-	 Return
+    If CurrentPage == "$TDL_PageChaos" && ChaosModule
+        ChaosModule.HandleSliderAccept(Self, option, value)
+    ElseIf CurrentPage == "$TDL_PageInventory" && InventoryModule
+        InventoryModule.HandleSliderAccept(Self, option, value)
+    ElseIf CurrentPage == "$TDL_PageWrath" && WrathModule
+        WrathModule.HandleSliderAccept(Self, option, value)
+    ElseIf CurrentPage == "$TDL_PageHunter" && HunterModule
+        HunterModule.HandleSliderAccept(Self, option, value)
+    ElseIf CurrentPage == "$TDL_PageGigant" && GigantModule
+        GigantModule.HandleSliderAccept(Self, option, value)
+    ElseIf CurrentPage == "$TDL_PageComedy" && ComedyModule
+        ComedyModule.HandleSliderAccept(Self, option, value)
+    ElseIf CurrentPage == "$TDL_PageVirus" && VirusModule
+        VirusModule.HandleSliderAccept(Self, option, value)
+    ElseIf CurrentPage == "$TDL_PageTeleport" && TeleportModule
+        TeleportModule.HandleSliderAccept(Self, option, value)
     EndIf
 EndEvent
 
 Event OnOptionSliderOpen(Int option)
-	; Route by page: option IDs repeat across pages, so the module chain below can steal Teleport clicks
-	If CurrentPage == "$TDL_PageTeleport"
-		If TeleportModule
-			TeleportModule.HandleSliderOpen(Self, option)
-		EndIf
-		Return
-	EndIf
-    If ChaosModule && ChaosModule.HandleSliderOpen(Self, option)
-        Return
-    EndIf
-    If InventoryModule && InventoryModule.HandleSliderOpen(Self, option)
-        Return
-    EndIf
-    If WrathModule && WrathModule.HandleSliderOpen(Self, option)
-        Return
-    EndIf
-    If HunterModule && HunterModule.HandleSliderOpen(Self, option)
-        Return
-    EndIf
-    If GigantModule && GigantModule.HandleSliderOpen(Self, option)
-        Return
-    EndIf
-    If ComedyModule && ComedyModule.HandleSliderOpen(Self, option)
-        Return
-    EndIf
-    If VirusModule && VirusModule.HandleSliderOpen(Self, option)
-	 Return
+    If CurrentPage == "$TDL_PageChaos" && ChaosModule
+        ChaosModule.HandleSliderOpen(Self, option)
+    ElseIf CurrentPage == "$TDL_PageInventory" && InventoryModule
+        InventoryModule.HandleSliderOpen(Self, option)
+    ElseIf CurrentPage == "$TDL_PageWrath" && WrathModule
+        WrathModule.HandleSliderOpen(Self, option)
+    ElseIf CurrentPage == "$TDL_PageHunter" && HunterModule
+        HunterModule.HandleSliderOpen(Self, option)
+    ElseIf CurrentPage == "$TDL_PageGigant" && GigantModule
+        GigantModule.HandleSliderOpen(Self, option)
+    ElseIf CurrentPage == "$TDL_PageComedy" && ComedyModule
+        ComedyModule.HandleSliderOpen(Self, option)
+    ElseIf CurrentPage == "$TDL_PageVirus" && VirusModule
+        VirusModule.HandleSliderOpen(Self, option)
+    ElseIf CurrentPage == "$TDL_PageTeleport" && TeleportModule
+        TeleportModule.HandleSliderOpen(Self, option)
     EndIf
 EndEvent
 
 Event OnOptionDefault(Int option)
-	; Route by page: option IDs repeat across pages, so the module chain below can steal Teleport clicks
-	If CurrentPage == "$TDL_PageTeleport"
-		If TeleportModule
-			TeleportModule.HandleOptionDefault(Self, option)
-		EndIf
-		Return
-	EndIf
-    If ChaosModule && ChaosModule.HandleOptionDefault(Self, option)
-        Return
-    EndIf
-    If InventoryModule && InventoryModule.HandleOptionDefault(Self, option)
-        Return
-    EndIf
-    If WrathModule && WrathModule.HandleOptionDefault(Self, option)
-        Return
-    EndIf
-    If HunterModule && HunterModule.HandleOptionDefault(Self, option)
-        Return
-    EndIf
-    If GigantModule && GigantModule.HandleOptionDefault(Self, option)
-        Return
-    EndIf
-    If ComedyModule && ComedyModule.HandleOptionDefault(Self, option)
-        Return
-    EndIf
-    If VirusModule && VirusModule.HandleOptionDefault(Self, option)
-	 Return
+    If CurrentPage == "$TDL_PageChaos" && ChaosModule
+        ChaosModule.HandleOptionDefault(Self, option)
+    ElseIf CurrentPage == "$TDL_PageInventory" && InventoryModule
+        InventoryModule.HandleOptionDefault(Self, option)
+    ElseIf CurrentPage == "$TDL_PageWrath" && WrathModule
+        WrathModule.HandleOptionDefault(Self, option)
+    ElseIf CurrentPage == "$TDL_PageHunter" && HunterModule
+        HunterModule.HandleOptionDefault(Self, option)
+    ElseIf CurrentPage == "$TDL_PageGigant" && GigantModule
+        GigantModule.HandleOptionDefault(Self, option)
+    ElseIf CurrentPage == "$TDL_PageComedy" && ComedyModule
+        ComedyModule.HandleOptionDefault(Self, option)
+    ElseIf CurrentPage == "$TDL_PageVirus" && VirusModule
+        VirusModule.HandleOptionDefault(Self, option)
+    ElseIf CurrentPage == "$TDL_PageTeleport" && TeleportModule
+        TeleportModule.HandleOptionDefault(Self, option)
     EndIf
 EndEvent
+

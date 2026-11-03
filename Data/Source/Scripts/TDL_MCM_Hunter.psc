@@ -114,6 +114,10 @@ Bool Function HandleSliderOpen(SKI_ConfigBase mcm, Int option)
 
 	; ===== DURATION =====
 	If option == OID_Duration
+		If HunterDuration != None
+			mcm.SetSliderDialogStartValue(HunterDuration.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(90)
 		mcm.SetSliderDialogRange(5, 600)
 		mcm.SetSliderDialogInterval(5)
 		Return True
@@ -121,6 +125,10 @@ Bool Function HandleSliderOpen(SKI_ConfigBase mcm, Int option)
 
 	; ===== RE-AGGRO =====
 	If option == OID_ReAggro
+		If ReAggroInterval != None
+			mcm.SetSliderDialogStartValue(ReAggroInterval.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(4.0)
 		mcm.SetSliderDialogRange(1.0, 10.0)
 		mcm.SetSliderDialogInterval(0.5)
 		Return True
@@ -128,6 +136,10 @@ Bool Function HandleSliderOpen(SKI_ConfigBase mcm, Int option)
 
 	; ===== DISTANCE =====
 	If option == OID_MaxDistance
+		If MaxDistance != None
+			mcm.SetSliderDialogStartValue(MaxDistance.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(5500)
 		mcm.SetSliderDialogRange(1500, 10000)
 		mcm.SetSliderDialogInterval(250)
 		Return True
@@ -135,6 +147,10 @@ Bool Function HandleSliderOpen(SKI_ConfigBase mcm, Int option)
 
 	; ===== SPAWN OFFSET =====
 	If option == OID_SpawnOffset
+		If SpawnOffset != None
+			mcm.SetSliderDialogStartValue(SpawnOffset.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(1200)
 		mcm.SetSliderDialogRange(300, 3000)
 		mcm.SetSliderDialogInterval(100)
 		Return True
@@ -142,6 +158,10 @@ Bool Function HandleSliderOpen(SKI_ConfigBase mcm, Int option)
 
 	; ===== CORPSE CLEANUP =====
 	If option == OID_CorpseTime
+		If HunterCorpseLifetime != None
+			mcm.SetSliderDialogStartValue(HunterCorpseLifetime.GetValue())
+		EndIf
+		mcm.SetSliderDialogDefaultValue(20)
 		mcm.SetSliderDialogRange(0, 300)
 		mcm.SetSliderDialogInterval(5)
 		Return True
